@@ -1,0 +1,14 @@
+{
+  "name": "urbex-api-MPL",
+  "version": "1.0.0",
+  "main": "src/Launch.js",
+  "type": "module",
+  "scripts": {
+    "start": "node Launch.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "sqlite3": "^5.1.7"
+  }
+}
