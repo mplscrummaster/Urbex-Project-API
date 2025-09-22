@@ -85,17 +85,12 @@ express.post("/login", (req, res) => {
   const { username_user: mail_user, password_user } = req.body;
   console.log("inside login route");
 
-  db.all(
-    `SELECT * FROM users WHERE mail_user = ? AND password
-	_user = ?`,
-    [mail_user, password_user],
-    (err, row) => {
-      if (err) return res.status(500).json({ error: err.message });
+  db.all(`SELECT * FROM users WHERE mail_user = ? AND password_user = ?`, [mail_user, password_user], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
 
-      if (row.length === 0) res.status(401).json("bad login or password");
-      else res.status(200).json(row);
-    }
-  );
+    if (row.length === 0) res.status(401).json("bad login or password");
+    else res.status(200).json(row);
+  });
 });
 //========================================================================
 // Routes CREATE
