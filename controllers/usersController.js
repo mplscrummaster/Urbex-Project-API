@@ -4,17 +4,18 @@ const endpoint = "api/";
 
 const ROUTES_GET = [
   { "/api/users": "get all users" },
+
+  // "/users/:id_user/programs",
+  // "/users/:id_user/programs/:id_program/seasons/:id_season/weeks/:id_week/sessions/:id_session/exercises",
+];
+
+const ROUTES_POST = [
   {
     "/api/login": {
       mail_user: "test@gmail.com",
       password_user: "test",
     },
   },
-  // "/users/:id_user/programs",
-  // "/users/:id_user/programs/:id_program/seasons/:id_season/weeks/:id_week/sessions/:id_session/exercises",
-];
-
-const ROUTES_POST = [
   {
     "/api/register/": {
       username_user: "test",
