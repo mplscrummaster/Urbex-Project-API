@@ -4,8 +4,12 @@ const endpoint = "api/";
 
 const ROUTES_GET = [
   { "/api/users": "get all users" },
-  { "/api/login/:username_user/:password_user": "login" },
-
+  {
+    "/api/login": {
+      mail_user: "test@gmail.com",
+      firstname_user: "test",
+    },
+  },
   // "/users/:id_user/programs",
   // "/users/:id_user/programs/:id_program/seasons/:id_season/weeks/:id_week/sessions/:id_session/exercises",
 ];
@@ -78,15 +82,20 @@ express.get("/users", (req, res) => {
  * login avec username et password
  */
 express.post("/login", (req, res) => {
-  const { username_user, password_user } = req.body;
+  const { username_user: mail_user, password_user } = req.body;
   console.log("inside login route");
 
-  db.all(`SELECT * FROM users WHERE username_user = ? AND password_user = ?`, [username_user, password_user], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+  db.all(
+    `SELECT * FROM users WHERE mail_user = ? AND password
+	_user = ?`,
+    [mail_user, password_user],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    if (row.length === 0) res.status(401).json("bad login or password");
-    else res.status(200).json(row);
-  });
+      if (row.length === 0) res.status(401).json("bad login or password");
+      else res.status(200).json(row);
+    }
+  );
 });
 //========================================================================
 // Routes CREATE
