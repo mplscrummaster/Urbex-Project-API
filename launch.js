@@ -12,7 +12,7 @@ app.use(express.json());
 // app.use("/sports_EP", sportsController);
 app.use("/api/", userController);
 
-const PORT = 80;
+const PORT = 81;
 app.listen(PORT, () => {
   console.log(`Server running at port ${PORT}`);
 });
