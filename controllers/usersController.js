@@ -7,7 +7,7 @@ const ROUTES_GET = [
   {
     "/api/login": {
       mail_user: "test@gmail.com",
-      firstname_user: "test",
+      password_user: "test",
     },
   },
   // "/users/:id_user/programs",
