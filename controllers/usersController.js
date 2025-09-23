@@ -96,6 +96,9 @@ router.get(`/`, (_req, res) => {
       { method: "GET", path: "/api/users/:id" },
       { method: "POST", path: "/api/login" },
       { method: "POST", path: "/api/register" },
+      // Scenarios (lecture seule)
+      { method: "GET", path: "/api/scenarios" },
+      { method: "GET", path: "/api/scenarios/:id" },
     ],
   });
 });

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import userController from "./controllers/usersController.js";
+import scenariosController from "./controllers/scenariosController.js";
 // import sportsController from "./API/sportsController.js";
 
 //==============================
@@ -21,6 +22,7 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // app.use("/sports_EP", sportsController);
 app.use("/api/", userController);
+app.use("/api/", scenariosController);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
