@@ -3,6 +3,7 @@ import db from "../db/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import requireAuth from "../middleware/auth.js";
+import { isAdmin } from "../middleware/rbac.js";
 const router = Router();
 
 // GET /api/users — liste des users (champs non sensibles)
@@ -14,6 +15,50 @@ router.get("/users", (req, res) => {
       )
       .all();
     res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: list users with roles
+router.get("/admin/users", requireAuth, (req, res) => {
+  if (!isAdmin(req.auth?.sub))
+    return res.status(403).json({ error: "forbidden" });
+  try {
+    const rows = db
+      .prepare(
+        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user FROM users`
+      )
+      .all();
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: update user role
+router.put("/admin/users/:id/role", requireAuth, (req, res) => {
+  if (!isAdmin(req.auth?.sub))
+    return res.status(403).json({ error: "forbidden" });
+  const id = Number.parseInt(req.params.id, 10);
+  const { role_user } = req.body || {};
+  if (!Number.isFinite(id) || id <= 0)
+    return res.status(400).json({ error: "invalid id" });
+  const allowed = new Set(["player", "scenarist", "admin"]);
+  if (!allowed.has(role_user))
+    return res.status(400).json({ error: "invalid role" });
+  try {
+    const info = db
+      .prepare(`UPDATE users SET role_user = ? WHERE _id_user = ?`)
+      .run(role_user, id);
+    if (info.changes === 0)
+      return res.status(404).json({ error: "user not found" });
+    const user = db
+      .prepare(
+        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user FROM users WHERE _id_user = ?`
+      )
+      .get(id);
+    res.json(user);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

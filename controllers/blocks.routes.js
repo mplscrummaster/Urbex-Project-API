@@ -1,6 +1,11 @@
 import { Router } from "express";
 import db from "../db/index.js";
 import requireAuth from "../middleware/auth.js";
+import {
+  canEditScenario,
+  canEditMission,
+  canEditBlock,
+} from "../middleware/rbac.js";
 
 const router = Router();
 
@@ -100,6 +105,8 @@ router.post("/scenarios/:id/intro/blocks", requireAuth, (req, res) => {
     return res.status(400).json({ error: "type_block is required" });
   const owner_type = "scenario_intro";
   try {
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
     const exists = db
       .prepare("SELECT 1 FROM scenarios WHERE _id_scenario = ?")
       .get(scenarioId);
@@ -156,6 +163,8 @@ router.post("/scenarios/:id/outro/blocks", requireAuth, (req, res) => {
     return res.status(400).json({ error: "type_block is required" });
   const owner_type = "scenario_outro";
   try {
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
     const exists = db
       .prepare("SELECT 1 FROM scenarios WHERE _id_scenario = ?")
       .get(scenarioId);
@@ -211,6 +220,8 @@ router.post("/missions/:id/blocks", requireAuth, (req, res) => {
   if (!type_block)
     return res.status(400).json({ error: "type_block is required" });
   try {
+    if (!canEditMission(req.auth?.sub, missionId))
+      return res.status(403).json({ error: "forbidden" });
     const exists = db
       .prepare("SELECT 1 FROM missions WHERE _id_mission = ?")
       .get(missionId);
@@ -259,6 +270,8 @@ router.put("/blocks/:id", requireAuth, (req, res) => {
   if (keys.length === 0)
     return res.status(400).json({ error: "no valid fields to update" });
   try {
+    if (!canEditBlock(req.auth?.sub, id))
+      return res.status(403).json({ error: "forbidden" });
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
     const values = keys.map((k) => payload[k]);
     const info = db
@@ -283,6 +296,8 @@ router.delete("/blocks/:id", requireAuth, (req, res) => {
   if (!Number.isFinite(id) || id <= 0)
     return res.status(400).json({ error: "invalid id" });
   try {
+    if (!canEditBlock(req.auth?.sub, id))
+      return res.status(403).json({ error: "forbidden" });
     const info = db.prepare("DELETE FROM blocks WHERE _id_block = ?").run(id);
     if (info.changes === 0)
       return res.status(404).json({ error: "block not found" });
@@ -302,6 +317,8 @@ router.put("/scenarios/:id/intro/blocks/reorder", requireAuth, (req, res) => {
     return res.status(400).json({ error: "expected array of {id, position}" });
   const owner_type = "scenario_intro";
   try {
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
     const trx = db.transaction((updates) => {
       for (const u of updates) {
         if (!Number.isFinite(u.id) || !Number.isFinite(u.position)) {
@@ -335,6 +352,8 @@ router.put("/scenarios/:id/outro/blocks/reorder", requireAuth, (req, res) => {
     return res.status(400).json({ error: "expected array of {id, position}" });
   const owner_type = "scenario_outro";
   try {
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
     const trx = db.transaction((updates) => {
       for (const u of updates) {
         if (!Number.isFinite(u.id) || !Number.isFinite(u.position)) {
@@ -367,6 +386,8 @@ router.put("/missions/:id/blocks/reorder", requireAuth, (req, res) => {
   if (items.length === 0)
     return res.status(400).json({ error: "expected array of {id, position}" });
   try {
+    if (!canEditMission(req.auth?.sub, missionId))
+      return res.status(403).json({ error: "forbidden" });
     const trx = db.transaction((updates) => {
       for (const u of updates) {
         if (!Number.isFinite(u.id) || !Number.isFinite(u.position)) {

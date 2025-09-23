@@ -1,6 +1,8 @@
 import { Router } from "express";
 import db from "../db/index.js";
 import requireAuth from "../middleware/auth.js";
+import requireAuth from "../middleware/auth.js";
+import { canEditScenario, canEditMission } from "../middleware/rbac.js";
 
 const router = Router();
 
@@ -89,18 +91,18 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
     !riddle_text ||
     !answer_word
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "title_mission, latitude, longitude, riddle_text, answer_word are required",
-      });
+    return res.status(400).json({
+      error:
+        "title_mission, latitude, longitude, riddle_text, answer_word are required",
+    });
   }
   try {
     const exists = db
       .prepare("SELECT 1 FROM scenarios WHERE _id_scenario = ?")
       .get(scenarioId);
     if (!exists) return res.status(404).json({ error: "scenario not found" });
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
 
     // determine position if not provided: max(position)+1
     let position = position_mission;
@@ -164,6 +166,8 @@ router.put("/missions/:id", requireAuth, (req, res) => {
   if (keys.length === 0)
     return res.status(400).json({ error: "no valid fields to update" });
   try {
+    if (!canEditMission(req.auth?.sub, id))
+      return res.status(403).json({ error: "forbidden" });
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
     const values = keys.map((k) => payload[k]);
     const info = db
@@ -195,6 +199,8 @@ router.delete("/missions/:id", requireAuth, (req, res) => {
   if (!Number.isFinite(id) || id <= 0)
     return res.status(400).json({ error: "invalid id" });
   try {
+    if (!canEditMission(req.auth?.sub, id))
+      return res.status(403).json({ error: "forbidden" });
     const info = db
       .prepare("DELETE FROM missions WHERE _id_mission = ?")
       .run(id);
@@ -215,6 +221,8 @@ router.put("/scenarios/:id/missions/reorder", requireAuth, (req, res) => {
   if (items.length === 0)
     return res.status(400).json({ error: "expected array of {id, position}" });
   try {
+    if (!canEditScenario(req.auth?.sub, scenarioId))
+      return res.status(403).json({ error: "forbidden" });
     const trx = db.transaction((updates) => {
       for (const u of updates) {
         if (!Number.isFinite(u.id) || !Number.isFinite(u.position)) {

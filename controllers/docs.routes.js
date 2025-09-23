@@ -41,6 +41,9 @@ const routes = [
   { method: "GET", path: "/api/me/player" },
   { method: "PUT", path: "/api/me/player" },
   { method: "GET", path: "/api/players" },
+  // admin
+  { method: "GET", path: "/api/admin/users" },
+  { method: "PUT", path: "/api/admin/users/:id/role" },
 ];
 
 router.get("/", (_req, res) => {
