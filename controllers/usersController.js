@@ -82,8 +82,8 @@ express.get("/users", (req, res) => {
 /**
  * login avec username et password
  */
-express.post("/login", (req, res) => {
-  const { username_user: mail_user, password_user } = req.body;
+express.get("/login", (req, res) => {
+  const { mail_user, password_user } = req.body;
   console.log("inside login route");
 
   db.all(`SELECT * FROM users WHERE mail_user = ? AND password_user = ?`, [mail_user, password_user], (err, row) => {
