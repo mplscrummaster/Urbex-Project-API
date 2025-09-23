@@ -2,8 +2,8 @@ import sqlite3 from "sqlite3";
 import { Router } from "express";
 const router = Router();
 
-// Connexion SQLite unique (fichier à la racine pour compat)
-const db = new sqlite3.Database(`bdd.db`, (err) => {
+// Connexion SQLite unique (BDD déplacée dans le dossier db/)
+const db = new sqlite3.Database(`db/bdd.db`, (err) => {
   if (err) console.error("Erreur de connexion à la BDD");
   else console.log("Connecté à la BDD");
 });
@@ -12,7 +12,7 @@ const db = new sqlite3.Database(`bdd.db`, (err) => {
 router.get("/users", (req, res) => {
   console.log("inside users route");
   db.all(
-    `SELECT id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users`,
+    `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users`,
     [],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
@@ -39,7 +39,7 @@ router.post("/login", (req, res) => {
   console.log("inside login route");
 
   db.all(
-    `SELECT id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE mail_user = ? AND password_user = ?`,
+    `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE mail_user = ? AND password_user = ?`,
     [mail_user, password_user],
     (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
