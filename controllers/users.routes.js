@@ -77,6 +77,11 @@ router.get(`/`, (_req, res) => {
       { method: "POST", path: "/api/register" },
       { method: "GET", path: "/api/scenarios" },
       { method: "GET", path: "/api/scenarios/:id" },
+      { method: "GET", path: "/api/scenarios/:id/missions" },
+      { method: "GET", path: "/api/missions/:id" },
+      { method: "GET", path: "/api/scenarios/:id/intro" },
+      { method: "GET", path: "/api/scenarios/:id/outro" },
+      { method: "GET", path: "/api/missions/:id/blocks" },
     ],
   });
 });

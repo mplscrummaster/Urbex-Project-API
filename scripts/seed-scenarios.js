@@ -25,19 +25,29 @@ try {
   );
   const data = [
     [
-      "Bruxelles abandonnée",
-      "Explorez les lieux oubliés de Bruxelles: usines, hôpitaux et gares à l'abandon.",
-      "https://example.com/img/scenario-bruxelles.jpg",
+      "Les ruines oubliées",
+      "Une quête parmi des vestiges anciens où chaque pierre chuchote un secret.",
+      null,
     ],
     [
-      "Charleroi underground",
-      "Sous-sol industriel et friches: itinéraire urbex au cœur du Pays Noir.",
-      "https://example.com/img/scenario-charleroi.jpg",
+      "Les ombres de la ville",
+      "Sous les néons et les tunnels, suivez la trace des silhouettes perdues.",
+      null,
     ],
     [
-      "Liège méconnue",
-      "De lîgotés aux terrils: parcours entre héritage et mystères.",
-      "https://example.com/img/scenario-liege.jpg",
+      "Les passages interdits",
+      "Des portes scellées, des couloirs silencieux, et des symboles à déchiffrer.",
+      null,
+    ],
+    [
+      "Le réseau invisible",
+      "Au-delà des cartes, un maillage secret relie les points oubliés.",
+      null,
+    ],
+    [
+      "Sous la poussière du temps",
+      "Laissez vos pas soulever l'histoire enfouie sous la poussière.",
+      null,
     ],
   ];
 

@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
+		},
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
+		},
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
+		},
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
+		}
+	]
+}

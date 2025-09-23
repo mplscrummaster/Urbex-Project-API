@@ -18,3 +18,44 @@ CREATE TABLE IF NOT EXISTS scenarios (
   intro_scenario   TEXT,
   url_img_scenario TEXT
 );
+
+-- Missions belong to a scenario and include order, GPS, riddle, and answer
+CREATE TABLE IF NOT EXISTS missions (
+  _id_mission       INTEGER PRIMARY KEY AUTOINCREMENT,
+  _id_scenario      INTEGER NOT NULL,
+  position_mission  INTEGER NOT NULL DEFAULT 1,
+  title_mission     TEXT NOT NULL,
+  latitude          REAL NOT NULL,
+  longitude         REAL NOT NULL,
+  riddle_text       TEXT NOT NULL,
+  answer_word       TEXT NOT NULL,
+  url_img_mission   TEXT,
+  FOREIGN KEY (_id_scenario) REFERENCES scenarios(_id_scenario) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_missions_scenario ON missions(_id_scenario, position_mission);
+
+-- Ordered content blocks for scenario intros, mission bodies, and scenario conclusions
+-- owner_type ∈ ('scenario_intro','mission','scenario_outro')
+CREATE TABLE IF NOT EXISTS blocks (
+  _id_block      INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_type     TEXT NOT NULL,
+  _id_scenario   INTEGER,
+  _id_mission    INTEGER,
+  position_block INTEGER NOT NULL DEFAULT 1,
+  type_block     TEXT NOT NULL,        -- 'text' | 'image' | 'video' | 'audio'
+  content_text   TEXT,                 -- for text blocks
+  url_media      TEXT,                 -- for media blocks
+  caption        TEXT,
+  FOREIGN KEY (_id_scenario) REFERENCES scenarios(_id_scenario) ON DELETE CASCADE,
+  FOREIGN KEY (_id_mission)  REFERENCES missions(_id_mission)   ON DELETE CASCADE,
+  CHECK (owner_type IN ('scenario_intro','mission','scenario_outro')),
+  CHECK (
+    (owner_type = 'scenario_intro'  AND _id_scenario IS NOT NULL AND _id_mission IS NULL) OR
+    (owner_type = 'scenario_outro'  AND _id_scenario IS NOT NULL AND _id_mission IS NULL) OR
+    (owner_type = 'mission'         AND _id_mission  IS NOT NULL AND _id_scenario IS NULL)
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_blocks_scenario ON blocks(_id_scenario, owner_type, position_block);
+CREATE INDEX IF NOT EXISTS idx_blocks_mission  ON blocks(_id_mission, position_block);
