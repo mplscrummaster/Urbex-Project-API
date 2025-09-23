@@ -6,8 +6,8 @@ Small Express + better-sqlite3 API with users and scenarios.
 
 - `launch.js`: App entrypoint (Express, CORS, routes, health)
 - `controllers/`
-  - `usersController.js`: `/api/users`, `/api/users/:id`, `/api/login`, `/api/register`
-  - `scenariosController.js`: `/api/scenarios`, `/api/scenarios/:id`
+  - `users.routes.js`: `/api/users`, `/api/users/:id`, `/api/login`, `/api/register`
+  - `scenarios.routes.js`: `/api/scenarios`, `/api/scenarios/:id`
 - `db/`
   - `index.js`: shared better-sqlite3 connection
   - `bdd.db`: SQLite file (ignored in git)

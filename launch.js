@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 
-import userController from "./controllers/usersController.js";
-import scenariosController from "./controllers/scenariosController.js";
+import usersRoutes from "./controllers/users.routes.js";
+import scenariosRoutes from "./controllers/scenarios.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -15,8 +15,8 @@ app.use(
 );
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.use("/api/", userController);
-app.use("/api/", scenariosController);
+app.use("/api/", usersRoutes);
+app.use("/api/", scenariosRoutes);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
