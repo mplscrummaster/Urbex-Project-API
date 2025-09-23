@@ -82,7 +82,7 @@ express.get("/users", (req, res) => {
 /**
  * login avec username et password
  */
-express.get("/login", (req, res) => {
+express.post("/login", (req, res) => {
   const { mail_user, password_user } = req.body;
   console.log("inside login route");
 
