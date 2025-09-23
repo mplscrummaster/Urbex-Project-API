@@ -3,8 +3,6 @@ import db from "../db/index.js";
 
 const router = Router();
 
-// Connexion unique better-sqlite3 via module partagé
-
 // GET /api/scenarios — liste des scénarios (lecture seule)
 router.get("/scenarios", (_req, res) => {
   try {
@@ -36,16 +34,6 @@ router.get("/scenarios/:id", (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-});
-
-// GET /api/ (scenarios doc)
-router.get(`/`, (_req, res) => {
-  return res.status(200).json({
-    routes: [
-      { method: "GET", path: "/api/scenarios" },
-      { method: "GET", path: "/api/scenarios/:id" },
-    ],
-  });
 });
 
 export default router;

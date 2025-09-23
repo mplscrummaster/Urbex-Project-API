@@ -3,11 +3,7 @@ import cors from "cors";
 
 import userController from "./controllers/usersController.js";
 import scenariosController from "./controllers/scenariosController.js";
-// import sportsController from "./API/sportsController.js";
 
-//==============================
-// server
-//==============================
 const app = express();
 app.use(express.json());
 app.use(
@@ -17,10 +13,8 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// Healthcheck simple
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// app.use("/sports_EP", sportsController);
 app.use("/api/", userController);
 app.use("/api/", scenariosController);
 
