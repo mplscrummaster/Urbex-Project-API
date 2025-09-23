@@ -20,6 +20,24 @@ router.get("/users", (req, res) => {
     }
   );
 });
+
+// GET /api/users/:id — un user par id (champs non sensibles)
+router.get("/users/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: "invalid id" });
+  }
+  console.log("inside user by id route", { id });
+  db.get(
+    `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE _id_user = ?`,
+    [id],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (!row) return res.status(404).json({ error: "user not found" });
+      res.json(row);
+    }
+  );
+});
 // /**
 //  * Select d'un user via son id
 //  */
@@ -75,6 +93,7 @@ router.get(`/`, (_req, res) => {
   return res.status(200).json({
     routes: [
       { method: "GET", path: "/api/users" },
+      { method: "GET", path: "/api/users/:id" },
       { method: "POST", path: "/api/login" },
       { method: "POST", path: "/api/register" },
     ],
