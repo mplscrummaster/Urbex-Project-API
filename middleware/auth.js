@@ -1,0 +1,23 @@
+import jwt from "jsonwebtoken";
+
+// Simple JWT auth middleware shared across routers
+export function requireAuth(req, res, next) {
+  try {
+    const auth = req.headers["authorization"] || "";
+    const parts = auth.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      return res
+        .status(401)
+        .json({ error: "missing or invalid Authorization header" });
+    }
+    const token = parts[1];
+    const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.auth = payload; // { sub, mail, iat, exp }
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: "invalid or expired token" });
+  }
+}
+
+export default requireAuth;

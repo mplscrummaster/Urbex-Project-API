@@ -1,5 +1,6 @@
 import fs from "fs";
 import db from "../db/index.js";
+import bcrypt from "bcryptjs";
 
 const DB_PATH = process.env.DB_PATH || "db/bdd.db";
 
@@ -23,7 +24,7 @@ try {
   const data = [
     {
       username_user: "max",
-      password_user: "max",
+      password_user: bcrypt.hashSync("max", 10),
       mail_user: "max@example.com",
       firstname_user: "Max",
       name_user: "Mich",
@@ -31,7 +32,7 @@ try {
     },
     {
       username_user: "polina",
-      password_user: "polina",
+      password_user: bcrypt.hashSync("polina", 10),
       mail_user: "polina@example.com",
       firstname_user: "Polina",
       name_user: "Bevz",
@@ -39,7 +40,7 @@ try {
     },
     {
       username_user: "louis",
-      password_user: "louis",
+      password_user: bcrypt.hashSync("louis", 10),
       mail_user: "louis@example.com",
       firstname_user: "Louis",
       name_user: "Janquart",

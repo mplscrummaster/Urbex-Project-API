@@ -20,6 +20,16 @@
 			"label": "reset-and-seed-db",
 			"type": "shell",
 			"command": "npm run db:reset:seed"
+		},
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
+		},
+		{
+			"label": "reset-and-seed-db",
+			"type": "shell",
+			"command": "npm run db:reset:seed"
 		}
 	]
 }
