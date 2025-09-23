@@ -1,24 +1,22 @@
-import sqlite3 from "sqlite3";
 import { Router } from "express";
+import db from "../db/index.js";
 
 const router = Router();
 
-// Connexion SQLite (même fichier que users)
-const db = new sqlite3.Database(`db/bdd.db`, (err) => {
-  if (err) console.error("Erreur de connexion à la BDD (scenarios)");
-  else console.log("Connecté à la BDD (scenarios)");
-});
+// Connexion unique better-sqlite3 via module partagé
 
 // GET /api/scenarios — liste des scénarios (lecture seule)
 router.get("/scenarios", (_req, res) => {
-  db.all(
-    `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios`,
-    [],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
-    }
-  );
+  try {
+    const rows = db
+      .prepare(
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios`
+      )
+      .all();
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/scenarios/:id — un scénario par id
@@ -27,15 +25,17 @@ router.get("/scenarios/:id", (req, res) => {
   if (!Number.isFinite(id) || id <= 0) {
     return res.status(400).json({ error: "invalid id" });
   }
-  db.get(
-    `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`,
-    [id],
-    (err, row) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (!row) return res.status(404).json({ error: "scenario not found" });
-      res.json(row);
-    }
-  );
+  try {
+    const row = db
+      .prepare(
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(id);
+    if (!row) return res.status(404).json({ error: "scenario not found" });
+    res.json(row);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/ (scenarios doc)

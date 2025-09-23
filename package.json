@@ -8,8 +8,8 @@
     "db:seed:scenarios": "node scripts/seed-scenarios.js"
   },
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "sqlite3": "^5.1.7"
+    "express": "^5.1.0"
   }
 }
