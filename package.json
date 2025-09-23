@@ -6,8 +6,10 @@
   "scripts": {
     "start": "node launch.js",
     "db:seed:scenarios": "node scripts/seed-scenarios.js",
+    "db:seed:users": "node scripts/seed-users.js",
+    "db:seed": "npm run db:seed:users && npm run db:seed:scenarios",
     "db:reset": "node scripts/db-reset.js",
-    "db:reset:seed": "npm run db:reset && npm run db:seed:scenarios"
+    "db:reset:seed": "npm run db:reset && npm run db:seed"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
