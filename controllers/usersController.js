@@ -8,9 +8,11 @@ const router = Router();
 router.get("/users", (req, res) => {
   console.log("inside users route");
   try {
-    const rows = db.prepare(
-      `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users`
-    ).all();
+    const rows = db
+      .prepare(
+        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users`
+      )
+      .all();
     res.json(rows);
   } catch (err) {
     return res.status(500).json({ error: err.message });

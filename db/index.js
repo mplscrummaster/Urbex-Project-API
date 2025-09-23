@@ -1,6 +1,6 @@
-import Database from 'better-sqlite3';
+import Database from "better-sqlite3";
 
-const DB_PATH = 'db/bdd.db';
+const DB_PATH = "db/bdd.db";
 
 // Single shared connection, readonly false to allow seeds/writes via API
 const db = new Database(DB_PATH, {
