@@ -1,70 +1,24 @@
 import sqlite3 from "sqlite3";
-import { Connect_DB } from "../connectDB.js";
-const endpoint = "api/";
+import { Router } from "express";
+const router = Router();
 
-const ROUTES_GET = [
-  { "/api/users": "get all users" },
-
-  // "/users/:id_user/programs",
-  // "/users/:id_user/programs/:id_program/seasons/:id_season/weeks/:id_week/sessions/:id_session/exercises",
-];
-
-const ROUTES_POST = [
-  {
-    "/api/login": {
-      mail_user: "test@gmail.com",
-      password_user: "test",
-    },
-  },
-  {
-    "/api/register/": {
-      username_user: "test",
-      password_user: "test",
-      mail_user: "test@gmail.com",
-      firstname_user: "test",
-      name_user: "test",
-      url_img_user: null,
-    },
-  },
-];
-
-const ROUTES_DELETE = [""];
-
-const connectDB = new Connect_DB().instance;
-const express = connectDB.getExpress();
-
-//==============================
-// BDD
-//==============================
-
+// Connexion SQLite unique (fichier à la racine pour compat)
 const db = new sqlite3.Database(`bdd.db`, (err) => {
   if (err) console.error("Erreur de connexion à la BDD");
   else console.log("Connecté à la BDD");
 });
 
-//-------------------------------
-//fin BDD
-//-------------------------------
-
-//------------------------------
-//fin doc
-//------------------------------
-
-//========================================================================
-// Routes GET
-//========================================================================
-//...
-//Users
-//...
-/**
- * Select de tous les users
- */
-express.get("/users", (req, res) => {
+// GET /api/users — liste des users (champs non sensibles)
+router.get("/users", (req, res) => {
   console.log("inside users route");
-  db.all(`SELECT * FROM users `, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  db.all(
+    `SELECT id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users`,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    }
+  );
 });
 // /**
 //  * Select d'un user via son id
@@ -79,26 +33,24 @@ express.get("/users", (req, res) => {
 //   });
 // });
 
-/**
- * login avec username et password
- */
-express.post("/login", (req, res) => {
+// POST /api/login — authentifie par email + mot de passe
+router.post("/login", (req, res) => {
   const { mail_user, password_user } = req.body;
   console.log("inside login route");
 
-  db.all(`SELECT * FROM users WHERE mail_user = ? AND password_user = ?`, [mail_user, password_user], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+  db.all(
+    `SELECT id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE mail_user = ? AND password_user = ?`,
+    [mail_user, password_user],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    if (row.length === 0) res.status(401).json("bad login or password");
-    else res.status(200).json(row);
-  });
+      if (rows.length === 0) res.status(401).json("bad login or password");
+      else res.status(200).json(rows[0]);
+    }
+  );
 });
-//========================================================================
-// Routes CREATE
-//========================================================================
-
-//Ajouter un user
-express.post(`/register`, (req, res) => {
+// POST /api/register — crée un user (validation simple)
+router.post(`/register`, (req, res) => {
   console.log("inside register route");
   const keys = Object.keys(req.body);
   // console.log("keys", keys);
@@ -118,34 +70,14 @@ express.post(`/register`, (req, res) => {
     }
   );
 });
-//========================================================================
-// Routes UPDATE/PUT
-//========================================================================
-
-//========================================================================
-// Routes DELETE
-//========================================================================
-
-// express.delete("/formations/:id", (req, res) => {
-//   const id = req.params.id;
-//   db.run(`DELETE FROM formations WHERE id_formation = ${id}`, function (err) {
-//     if (err) return res.status(500).json({ error: err.message });
-//     res.status(200).json({ deleted: this.changes });
-//   });
-// });
-
-//---------------------------
-// FIN Routes DELETE
-//---------------------------
-/**
- * Documentation de l'api
- */
-express.get(`/`, (req, res) => {
-  const tmpDoc = {
-    ROUTES_GET,
-    ROUTES_POST,
-    ROUTES_DELETE,
-  };
-  return res.status(200).json(tmpDoc);
+// GET /api/ — mini doc JSON des endpoints de ce router
+router.get(`/`, (_req, res) => {
+  return res.status(200).json({
+    routes: [
+      { method: "GET", path: "/api/users" },
+      { method: "POST", path: "/api/login" },
+      { method: "POST", path: "/api/register" },
+    ],
+  });
 });
-export default express;
+export default router;
