@@ -29,6 +29,7 @@ try {
       firstname_user: "Max",
       name_user: "Mich",
       url_img_user: "",
+      role_user: "admin",
     },
     {
       username_user: "polina",
@@ -37,6 +38,7 @@ try {
       firstname_user: "Polina",
       name_user: "Bevz",
       url_img_user: null,
+      role_user: "scenarist",
     },
     {
       username_user: "louis",
@@ -45,23 +47,29 @@ try {
       firstname_user: "Louis",
       name_user: "Janquart",
       url_img_user: null,
+      role_user: "player",
     },
   ];
 
   const stmt = db.prepare(
-    "INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user, role_user) VALUES (?, ?, ?, ?, ?, ?, ?)"
   );
 
   const insertMany = db.transaction((rows) => {
     for (const u of rows) {
-      stmt.run(
+      const info = stmt.run(
         u.username_user,
         u.password_user,
         u.mail_user,
         u.firstname_user,
         u.name_user,
-        u.url_img_user
+        u.url_img_user,
+        u.role_user
       );
+      // Create a default player profile for each user
+      db.prepare(
+        "INSERT INTO players (_id_user, nickname, bio, url_img_avatar, score, level, xp) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      ).run(Number(info.lastInsertRowid), u.username_user, null, null, 0, 1, 0);
     }
   });
   insertMany(data);

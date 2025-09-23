@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   mail_user      TEXT NOT NULL UNIQUE,
   firstname_user TEXT,
   name_user      TEXT,
-  url_img_user   TEXT
+  url_img_user   TEXT,
+  role_user      TEXT NOT NULL DEFAULT 'player' CHECK (role_user IN ('player','scenarist','admin'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_mail ON users(mail_user);
@@ -16,8 +17,12 @@ CREATE TABLE IF NOT EXISTS scenarios (
   _id_scenario     INTEGER PRIMARY KEY AUTOINCREMENT,
   title_scenario   TEXT NOT NULL,
   intro_scenario   TEXT,
-  url_img_scenario TEXT
+  url_img_scenario TEXT,
+  created_by       INTEGER,
+  FOREIGN KEY (created_by) REFERENCES users(_id_user) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_scenarios_creator ON scenarios(created_by);
 
 -- Missions belong to a scenario and include order, GPS, riddle, and answer
 CREATE TABLE IF NOT EXISTS missions (
@@ -59,3 +64,19 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 CREATE INDEX IF NOT EXISTS idx_blocks_scenario ON blocks(_id_scenario, owner_type, position_block);
 CREATE INDEX IF NOT EXISTS idx_blocks_mission  ON blocks(_id_mission, position_block);
+
+-- Player profiles linked 1:1 to users
+CREATE TABLE IF NOT EXISTS players (
+  _id_player     INTEGER PRIMARY KEY AUTOINCREMENT,
+  _id_user       INTEGER NOT NULL UNIQUE,
+  nickname       TEXT,
+  bio            TEXT,
+  url_img_avatar TEXT,
+  score          INTEGER NOT NULL DEFAULT 0,
+  level          INTEGER NOT NULL DEFAULT 1,
+  xp             INTEGER NOT NULL DEFAULT 0,
+  created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (_id_user) REFERENCES users(_id_user) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_players_user ON players(_id_user);

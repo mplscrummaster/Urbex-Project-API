@@ -37,6 +37,10 @@ const routes = [
   { method: "PUT", path: "/api/scenarios/:id/intro/blocks/reorder" },
   { method: "PUT", path: "/api/scenarios/:id/outro/blocks/reorder" },
   { method: "PUT", path: "/api/missions/:id/blocks/reorder" },
+  // players
+  { method: "GET", path: "/api/me/player" },
+  { method: "PUT", path: "/api/me/player" },
+  { method: "GET", path: "/api/players" },
 ];
 
 router.get("/", (_req, res) => {

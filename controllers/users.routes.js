@@ -49,7 +49,7 @@ router.post("/login", (req, res) => {
   try {
     const row = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, password_user FROM users WHERE mail_user = ?`
+        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user, password_user FROM users WHERE mail_user = ?`
       )
       .get(mail_user);
     if (!row) return res.status(401).json("bad login or password");
@@ -102,7 +102,7 @@ router.post(`/register`, (req, res) => {
 
     const hash = bcrypt.hashSync(password_user, 10);
     const stmt = db.prepare(
-      `INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user) VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user, role_user) VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
     const info = stmt.run(
       username_user,
@@ -110,7 +110,8 @@ router.post(`/register`, (req, res) => {
       mail_user,
       firstname_user ?? null,
       name_user ?? null,
-      url_img_user ?? null
+      url_img_user ?? null,
+      "player"
     );
 
     const user = {
@@ -120,6 +121,7 @@ router.post(`/register`, (req, res) => {
       firstname_user: firstname_user ?? null,
       name_user: name_user ?? null,
       url_img_user: url_img_user ?? null,
+      role_user: "player",
     };
 
     const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";

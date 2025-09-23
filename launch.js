@@ -6,6 +6,7 @@ import scenariosRoutes from "./controllers/scenarios.routes.js";
 import missionsRoutes from "./controllers/missions.routes.js";
 import blocksRoutes from "./controllers/blocks.routes.js";
 import docsRoutes from "./controllers/docs.routes.js";
+import playersRoutes from "./controllers/players.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use("/api/", scenariosRoutes);
 app.use("/api/", missionsRoutes);
 app.use("/api/", blocksRoutes);
 app.use("/api/", docsRoutes);
+app.use("/api/", playersRoutes);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {

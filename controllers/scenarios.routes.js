@@ -49,12 +49,17 @@ router.post("/scenarios", requireAuth, (req, res) => {
   try {
     const info = db
       .prepare(
-        `INSERT INTO scenarios (title_scenario, intro_scenario, url_img_scenario) VALUES (?, ?, ?)`
+        `INSERT INTO scenarios (title_scenario, intro_scenario, url_img_scenario, created_by) VALUES (?, ?, ?, ?)`
       )
-      .run(title_scenario, intro_scenario, url_img_scenario);
+      .run(
+        title_scenario,
+        intro_scenario,
+        url_img_scenario,
+        req.auth?.sub ?? null
+      );
     const created = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(Number(info.lastInsertRowid));
     return res.status(201).json(created);
@@ -74,6 +79,19 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
   if (keys.length === 0)
     return res.status(400).json({ error: "no valid fields to update" });
   try {
+    // RBAC: allow if admin or author
+    const owner = db
+      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
+      .get(id);
+    if (!owner) return res.status(404).json({ error: "scenario not found" });
+    const me = db
+      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
+      .get(req.auth?.sub);
+    const isAdmin = me?.role_user === "admin";
+    const isAuthor = owner?.created_by === req.auth?.sub;
+    if (!isAdmin && !isAuthor)
+      return res.status(403).json({ error: "forbidden" });
+
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
     const values = keys.map((k) => payload[k]);
     const info = db
@@ -83,7 +101,7 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
       return res.status(404).json({ error: "scenario not found" });
     const updated = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
     return res.json(updated);
@@ -98,6 +116,19 @@ router.delete("/scenarios/:id", requireAuth, (req, res) => {
   if (!Number.isFinite(id) || id <= 0)
     return res.status(400).json({ error: "invalid id" });
   try {
+    // RBAC: allow if admin or author
+    const owner = db
+      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
+      .get(id);
+    if (!owner) return res.status(404).json({ error: "scenario not found" });
+    const me = db
+      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
+      .get(req.auth?.sub);
+    const isAdmin = me?.role_user === "admin";
+    const isAuthor = owner?.created_by === req.auth?.sub;
+    if (!isAdmin && !isAuthor)
+      return res.status(403).json({ error: "forbidden" });
+
     const info = db
       .prepare("DELETE FROM scenarios WHERE _id_scenario = ?")
       .run(id);
