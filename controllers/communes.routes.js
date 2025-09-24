@@ -7,7 +7,7 @@ const router = Router();
 
 // NOTE: Communes dataset is canonical & read-only; schema: name_fr, name_nl, name_de, geo_point_lat, geo_point_lon, geo_shape_geojson, postal_codes
 
-// GET /api/communes - list communes (q search across multilingual names, optional postal filter)
+// READ communes
 router.get("/communes", (req, res) => {
   try {
     const { q, postal } = req.query || {};
@@ -43,7 +43,7 @@ router.get("/communes", (req, res) => {
   }
 });
 
-// GET /api/communes/:id - single commune + associated scenarios
+// READ commune
 router.get("/communes/:id", (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(id) || id <= 0)
@@ -70,7 +70,7 @@ router.get("/communes/:id", (req, res) => {
   }
 });
 
-// GET /api/scenarios/:id/communes - communes linked to scenario
+// READ scenario communes
 router.get("/scenarios/:id/communes", (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(scenarioId) || scenarioId <= 0)
@@ -90,7 +90,7 @@ router.get("/scenarios/:id/communes", (req, res) => {
   }
 });
 
-// POST /api/scenarios/:id/communes - attach communes to scenario (replace set) { commune_ids: [..] }
+// CREATE scenario communes
 router.post("/scenarios/:id/communes", requireAuth, (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(scenarioId) || scenarioId <= 0)
