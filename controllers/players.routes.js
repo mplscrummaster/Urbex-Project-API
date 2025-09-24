@@ -4,14 +4,31 @@ import requireAuth from "../middleware/auth.js";
 
 const router = Router();
 
-function isAdmin(userId) {
+const isAdmin = (userId) => {
   const row = db
     .prepare("SELECT role_user FROM users WHERE _id_user = ?")
     .get(userId);
   return row?.role_user === "admin";
-}
+};
 
-// GET /api/me/player — current user's player profile
+// READ players
+router.get("/players", requireAuth, (req, res) => {
+  try {
+    if (!isAdmin(req.auth?.sub))
+      return res.status(403).json({ error: "forbidden" });
+    const rows = db
+      .prepare(
+        `SELECT p._id_player AS id, u.username_user AS username, u.mail_user AS mail, p.nickname, p.score, p.level, p.xp
+         FROM players p JOIN users u ON u._id_user = p._id_user`
+      )
+      .all();
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ player profile (own)
 router.get("/me/player", requireAuth, (req, res) => {
   try {
     const player = db
@@ -27,7 +44,7 @@ router.get("/me/player", requireAuth, (req, res) => {
   }
 });
 
-// PUT /api/me/player — update own player profile
+// UPDATE player profile (own)
 router.put("/me/player", requireAuth, (req, res) => {
   // Accept some alias field names for dev ergonomics
   const allowed = ["nickname", "bio", "url_img_avatar"];
@@ -97,23 +114,6 @@ router.put("/me/player", requireAuth, (req, res) => {
     res.json({ ...player, created: false });
   } catch (err) {
     console.error("/me/player upsert error", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/players — admin list of players
-router.get("/players", requireAuth, (req, res) => {
-  try {
-    if (!isAdmin(req.auth?.sub))
-      return res.status(403).json({ error: "forbidden" });
-    const rows = db
-      .prepare(
-        `SELECT p._id_player AS id, u.username_user AS username, u.mail_user AS mail, p.nickname, p.score, p.level, p.xp
-         FROM players p JOIN users u ON u._id_user = p._id_user`
-      )
-      .all();
-    res.json(rows);
-  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });

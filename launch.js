@@ -5,7 +5,9 @@ import usersRoutes from "./controllers/users.routes.js";
 import scenariosRoutes from "./controllers/scenarios.routes.js";
 import missionsRoutes from "./controllers/missions.routes.js";
 import blocksRoutes from "./controllers/blocks.routes.js";
-import docsRoutes from "./controllers/docs.routes.js";
+import docsRoutes, {
+  routes as documentedRoutes,
+} from "./controllers/docs.routes.js";
 import playersRoutes from "./controllers/players.routes.js";
 import communesRoutes from "./controllers/communes.routes.js";
 import progressRoutes from "./controllers/progress.routes.js";
@@ -32,6 +34,11 @@ app.use("/api/", playersRoutes);
 app.use("/api/", communesRoutes);
 app.use("/api/", progressRoutes);
 app.use("/api/", missionDependenciesRoutes);
+
+// Root: show API documentation summary instead of login form (frontend not served here)
+app.get("/", (_req, res) => {
+  res.status(200).json({ name: "Urbex API", routes: documentedRoutes });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
