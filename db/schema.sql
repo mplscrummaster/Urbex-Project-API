@@ -16,7 +16,6 @@ CREATE INDEX IF NOT EXISTS idx_users_mail ON users(mail_user);
 CREATE TABLE IF NOT EXISTS scenarios (
   _id_scenario            INTEGER PRIMARY KEY AUTOINCREMENT,
   title_scenario          TEXT NOT NULL,
-  intro_scenario          TEXT,
   url_img_scenario        TEXT,
   summary_scenario        TEXT, -- short abstract / teaser
   difficulty              TEXT NOT NULL DEFAULT 'easy' CHECK (difficulty IN ('easy','medium','hard')),
@@ -86,18 +85,21 @@ CREATE TABLE IF NOT EXISTS players (
 
 CREATE INDEX IF NOT EXISTS idx_players_user ON players(_id_user);
 
--- Communes (Belgian municipalities) and many-to-many link with scenarios
+-- Communes table (v2): drop municipality_code (no longer needed) + add postal_codes placeholder (TEXT, JSON array or comma list)
 CREATE TABLE IF NOT EXISTS communes (
-  _id_commune    INTEGER PRIMARY KEY AUTOINCREMENT,
-  name_commune   TEXT NOT NULL,
-  nis_code       TEXT UNIQUE,            -- official Belgian NIS code (optional)
-  region         TEXT,                   -- e.g. 'Wallonia', 'Flanders', 'Brussels'
-  province       TEXT,                   -- e.g. 'Hainaut', 'Luxembourg', 'Limburg'
-  latitude       REAL,                   -- optional centroid lat
-  longitude      REAL                    -- optional centroid lon
+  _id_commune       INTEGER PRIMARY KEY AUTOINCREMENT,
+  name_fr           TEXT,
+  name_nl           TEXT,
+  name_de           TEXT,
+  geo_point_lat     REAL,
+  geo_point_lon     REAL,
+  geo_shape_geojson TEXT,
+  postal_codes      TEXT                -- NULL for now; later will contain e.g. '1000,1005' or JSON '["1000","1005"]'
 );
 
-CREATE INDEX IF NOT EXISTS idx_communes_name ON communes(name_commune);
+CREATE INDEX IF NOT EXISTS idx_communes_name_fr ON communes(name_fr);
+CREATE INDEX IF NOT EXISTS idx_communes_name_nl ON communes(name_nl);
+CREATE INDEX IF NOT EXISTS idx_communes_name_de ON communes(name_de);
 
 CREATE TABLE IF NOT EXISTS scenario_communes (
   _id_scenario INTEGER NOT NULL,
@@ -109,6 +111,8 @@ CREATE TABLE IF NOT EXISTS scenario_communes (
 
 CREATE INDEX IF NOT EXISTS idx_scenario_communes_scenario ON scenario_communes(_id_scenario);
 CREATE INDEX IF NOT EXISTS idx_scenario_communes_commune  ON scenario_communes(_id_commune);
+
+-- Removed obsolete commune_postal_codes table (multi postal codes not needed)
 
 -- Player scenario progress (bookmarks + status)
 CREATE TABLE IF NOT EXISTS scenario_progress (

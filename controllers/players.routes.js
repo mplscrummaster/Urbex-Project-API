@@ -29,27 +29,74 @@ router.get("/me/player", requireAuth, (req, res) => {
 
 // PUT /api/me/player — update own player profile
 router.put("/me/player", requireAuth, (req, res) => {
+  // Accept some alias field names for dev ergonomics
   const allowed = ["nickname", "bio", "url_img_avatar"];
-  const payload = req.body || {};
-  const keys = Object.keys(payload).filter((k) => allowed.includes(k));
-  if (keys.length === 0)
-    return res.status(400).json({ error: "no valid fields to update" });
+  const aliasMap = {
+    pseudo: "nickname",
+    description: "bio",
+    avatar: "url_img_avatar",
+    avatar_url: "url_img_avatar",
+    url_img_user: "url_img_avatar",
+  };
+  const raw = req.body || {};
+  const payload = {};
+  for (const k of Object.keys(raw)) {
+    const mapped = aliasMap[k] || k;
+    if (allowed.includes(mapped)) {
+      payload[mapped] = raw[k];
+    }
+  }
+
+  const fieldNames = Object.keys(payload);
+  const userId = req.auth?.sub;
+
   try {
-    const setClause = keys.map((k) => `${k} = ?`).join(", ");
-    const values = keys.map((k) => payload[k]);
+    // Ensure a row exists (INSERT OR IGNORE is idempotent thanks to UNIQUE on _id_user)
+    db.prepare("INSERT OR IGNORE INTO players (_id_user) VALUES (?)").run(
+      userId
+    );
+
+    if (fieldNames.length === 0) {
+      // Just return existing (or newly created blank) profile
+      const player = db
+        .prepare(
+          `SELECT p._id_player AS id, p._id_user AS user_id, p.nickname, p.bio, p.url_img_avatar, p.score, p.level, p.xp, p.created_at
+           FROM players p WHERE p._id_user = ?`
+        )
+        .get(userId);
+      const created =
+        player &&
+        player.nickname == null &&
+        player.bio == null &&
+        player.url_img_avatar == null; // heuristic
+      return res.status(200).json({ ...player, created });
+    }
+
+    // Build dynamic UPDATE only for provided fields
+    const setClause = fieldNames.map((f) => `${f} = ?`).join(", ");
+    const values = fieldNames.map((f) => payload[f]);
     const info = db
       .prepare(`UPDATE players SET ${setClause} WHERE _id_user = ?`)
-      .run(...values, req.auth?.sub);
-    if (info.changes === 0)
-      return res.status(404).json({ error: "player not found" });
+      .run(...values, userId);
+
+    if (info.changes === 0) {
+      // This should be rare (would mean row vanished after INSERT OR IGNORE) => recreate explicitly
+      db.prepare("INSERT INTO players (_id_user) VALUES (?)").run(userId);
+      db.prepare(`UPDATE players SET ${setClause} WHERE _id_user = ?`).run(
+        ...values,
+        userId
+      );
+    }
+
     const player = db
       .prepare(
         `SELECT p._id_player AS id, p._id_user AS user_id, p.nickname, p.bio, p.url_img_avatar, p.score, p.level, p.xp, p.created_at
          FROM players p WHERE p._id_user = ?`
       )
-      .get(req.auth?.sub);
-    res.json(player);
+      .get(userId);
+    res.json({ ...player, created: false });
   } catch (err) {
+    console.error("/me/player upsert error", err);
     return res.status(500).json({ error: err.message });
   }
 });

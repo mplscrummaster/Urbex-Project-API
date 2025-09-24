@@ -11,6 +11,8 @@
     "db:seed:mission-deps": "node scripts/seed-mission-dependencies.js",
     "db:seed:users": "node scripts/seed-users.js",
     "db:seed:blocks": "node scripts/seed-blocks.js",
+    "db:import:communes": "node scripts/import-communes-from-csv.js",
+    "db:migrate:communes": "node scripts/migrate-communes-extended.js",
     "db:seed": "npm run db:seed:users && npm run db:seed:scenarios && npm run db:seed:missions && npm run db:seed:mission-deps && npm run db:seed:blocks && npm run db:seed:communes",
     "seed": "npm run db:seed",
     "db:reset": "node scripts/db-reset.js",
@@ -24,6 +26,7 @@
     "express": "^5.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "adm-zip": "^0.5.12"
   }
 }
