@@ -13,16 +13,14 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_mail ON users(mail_user);
 
+-- Scenarios (v2): simplified -> removed url_img_scenario, summary_scenario, difficulty, estimated_duration_min; added created_at
 CREATE TABLE IF NOT EXISTS scenarios (
-  _id_scenario            INTEGER PRIMARY KEY AUTOINCREMENT,
-  title_scenario          TEXT NOT NULL,
-  url_img_scenario        TEXT,
-  summary_scenario        TEXT, -- short abstract / teaser
-  difficulty              TEXT NOT NULL DEFAULT 'easy' CHECK (difficulty IN ('easy','medium','hard')),
-  estimated_duration_min  INTEGER, -- approximate time to finish
-  is_published            INTEGER NOT NULL DEFAULT 0, -- 0 draft / 1 published
-  updated_at              TEXT NOT NULL DEFAULT (datetime('now')),
-  created_by              INTEGER,
+  _id_scenario   INTEGER PRIMARY KEY AUTOINCREMENT,
+  title_scenario TEXT NOT NULL,
+  is_published   INTEGER NOT NULL DEFAULT 0, -- 0 draft / 1 published
+  created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  created_by     INTEGER,
   FOREIGN KEY (created_by) REFERENCES users(_id_user) ON DELETE SET NULL
 );
 

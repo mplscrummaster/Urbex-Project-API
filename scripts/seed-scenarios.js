@@ -21,19 +21,19 @@ try {
   }
 
   const stmt = db.prepare(
-    "INSERT INTO scenarios (title_scenario, url_img_scenario) VALUES (?, ?)"
+    "INSERT INTO scenarios (title_scenario, is_published) VALUES (?, 0)"
   );
   const data = [
-    ["Les ruines oubliées", null],
-    ["Les ombres de la ville", null],
-    ["Les passages interdits", null],
-    ["Le réseau invisible", null],
-    ["Sous la poussière du temps", null],
+    ["Les ruines oubliées"],
+    ["Les ombres de la ville"],
+    ["Les passages interdits"],
+    ["Le réseau invisible"],
+    ["Sous la poussière du temps"],
   ];
 
   const insertMany = db.transaction((rows) => {
-    for (const [t, u] of rows) {
-      stmt.run(t, u);
+    for (const [t] of rows) {
+      stmt.run(t);
     }
   });
   insertMany(data);
