@@ -37,6 +37,16 @@ const routes = [
   { method: "PUT", path: "/api/scenarios/:id/intro/blocks/reorder" },
   { method: "PUT", path: "/api/scenarios/:id/outro/blocks/reorder" },
   { method: "PUT", path: "/api/missions/:id/blocks/reorder" },
+  // progress & bookmarks
+  { method: "POST", path: "/api/scenarios/:id/start" },
+  { method: "POST", path: "/api/scenarios/:id/bookmark" },
+  { method: "DELETE", path: "/api/scenarios/:id/bookmark" },
+  { method: "GET", path: "/api/scenarios/:id/progress" },
+  { method: "POST", path: "/api/missions/:id/complete" },
+  { method: "GET", path: "/api/me/scenarios" },
+  // mission prerequisites
+  { method: "PUT", path: "/api/missions/:id/prerequisites" },
+  { method: "GET", path: "/api/missions/:id/prerequisites" },
   // players
   { method: "GET", path: "/api/me/player" },
   { method: "PUT", path: "/api/me/player" },

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db from "../db/index.js";
-import requireAuth from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -39,27 +39,34 @@ router.get("/scenarios/:id", (req, res) => {
 
 // CREATE scenario
 router.post("/scenarios", requireAuth, (req, res) => {
-  const {
-    title_scenario,
-    intro_scenario = null,
-    url_img_scenario = null,
-  } = req.body || {};
+  const body = req.body || {};
+  const title_scenario = body.title_scenario;
   if (!title_scenario)
     return res.status(400).json({ error: "title_scenario is required" });
+  const intro_scenario = body.intro_scenario ?? null;
+  const url_img_scenario = body.url_img_scenario ?? null;
+  const summary_scenario = body.summary_scenario ?? null;
+  const difficulty = body.difficulty ?? "easy";
+  const estimated_duration_min = body.estimated_duration_min ?? null;
+  const is_published = body.is_published ? 1 : 0;
   try {
     const info = db
       .prepare(
-        `INSERT INTO scenarios (title_scenario, intro_scenario, url_img_scenario, created_by) VALUES (?, ?, ?, ?)`
+        `INSERT INTO scenarios (title_scenario,intro_scenario,url_img_scenario,summary_scenario,difficulty,estimated_duration_min,is_published,created_by) VALUES (?,?,?,?,?,?,?,?)`
       )
       .run(
         title_scenario,
         intro_scenario,
         url_img_scenario,
-        req.auth?.sub ?? null
+        summary_scenario,
+        difficulty,
+        estimated_duration_min,
+        is_published,
+        req.auth?._id_user ?? req.auth?.sub ?? null
       );
     const created = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, created_by FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(Number(info.lastInsertRowid));
     return res.status(201).json(created);
@@ -73,7 +80,15 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(id) || id <= 0)
     return res.status(400).json({ error: "invalid id" });
-  const allowed = ["title_scenario", "intro_scenario", "url_img_scenario"];
+  const allowed = [
+    "title_scenario",
+    "intro_scenario",
+    "url_img_scenario",
+    "summary_scenario",
+    "difficulty",
+    "estimated_duration_min",
+    "is_published",
+  ];
   const payload = req.body || {};
   const keys = Object.keys(payload).filter((k) => allowed.includes(k));
   if (keys.length === 0)
@@ -92,7 +107,12 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
     if (!isAdmin && !isAuthor)
       return res.status(403).json({ error: "forbidden" });
 
-    const setClause = keys.map((k) => `${k} = ?`).join(", ");
+    // Normalize boolean-like field
+    if (keys.includes("is_published")) {
+      payload.is_published = payload.is_published ? 1 : 0;
+    }
+    const setClause =
+      keys.map((k) => `${k} = ?`).join(", ") + ", updated_at = datetime('now')";
     const values = keys.map((k) => payload[k]);
     const info = db
       .prepare(`UPDATE scenarios SET ${setClause} WHERE _id_scenario = ?`)
@@ -101,7 +121,7 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
       return res.status(404).json({ error: "scenario not found" });
     const updated = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, created_by FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
     return res.json(updated);
@@ -216,11 +236,47 @@ router.get("/scenarios/:id/full", (req, res) => {
       blocks: byMission.get(m.id) || [],
     }));
 
+    // Optionally enrich with progress if Authorization header is present and valid
+    let progressData = null;
+    try {
+      // naive reuse of scenario_progress tables if auth decoded earlier in pipeline; if not ignore silently
+      if (req.auth?._id_user) {
+        const userId = req.auth._id_user;
+        const sp = db
+          .prepare(
+            `SELECT status, bookmarked, started_at, completed_at FROM scenario_progress WHERE _id_user=? AND _id_scenario=?`
+          )
+          .get(userId, id);
+        const completedMissionRows = db
+          .prepare(
+            `SELECT _id_mission FROM mission_progress WHERE _id_user=? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario=?)`
+          )
+          .all(userId, id);
+        const completedSet = new Set(
+          completedMissionRows.map((r) => r._id_mission)
+        );
+        progressData = {
+          scenario: sp
+            ? {
+                status: sp.status,
+                bookmarked: !!sp.bookmarked,
+                started_at: sp.started_at,
+                completed_at: sp.completed_at,
+              }
+            : { status: "not_started", bookmarked: false },
+          completedMissionIds: Array.from(completedSet),
+        };
+      }
+    } catch (_e) {
+      // ignore progress enrichment errors to keep backwards compatibility
+    }
+
     res.json({
       scenario,
       introBlocks,
       missions: missionsWithBlocks,
       outroBlocks,
+      progress: progressData,
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
