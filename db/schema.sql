@@ -80,3 +80,27 @@ CREATE TABLE IF NOT EXISTS players (
 );
 
 CREATE INDEX IF NOT EXISTS idx_players_user ON players(_id_user);
+
+-- Communes (Belgian municipalities) and many-to-many link with scenarios
+CREATE TABLE IF NOT EXISTS communes (
+  _id_commune    INTEGER PRIMARY KEY AUTOINCREMENT,
+  name_commune   TEXT NOT NULL,
+  nis_code       TEXT UNIQUE,            -- official Belgian NIS code (optional)
+  region         TEXT,                   -- e.g. 'Wallonia', 'Flanders', 'Brussels'
+  province       TEXT,                   -- e.g. 'Hainaut', 'Luxembourg', 'Limburg'
+  latitude       REAL,                   -- optional centroid lat
+  longitude      REAL                    -- optional centroid lon
+);
+
+CREATE INDEX IF NOT EXISTS idx_communes_name ON communes(name_commune);
+
+CREATE TABLE IF NOT EXISTS scenario_communes (
+  _id_scenario INTEGER NOT NULL,
+  _id_commune  INTEGER NOT NULL,
+  PRIMARY KEY (_id_scenario, _id_commune),
+  FOREIGN KEY (_id_scenario) REFERENCES scenarios(_id_scenario) ON DELETE CASCADE,
+  FOREIGN KEY (_id_commune)  REFERENCES communes(_id_commune)  ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_scenario_communes_scenario ON scenario_communes(_id_scenario);
+CREATE INDEX IF NOT EXISTS idx_scenario_communes_commune  ON scenario_communes(_id_commune);

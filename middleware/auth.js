@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../config/index.js";
 
 // Simple JWT auth middleware shared across routers
 export function requireAuth(req, res, next) {
@@ -11,7 +12,6 @@ export function requireAuth(req, res, next) {
         .json({ error: "missing or invalid Authorization header" });
     }
     const token = parts[1];
-    const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
     const payload = jwt.verify(token, JWT_SECRET);
     req.auth = payload; // { sub, mail, iat, exp }
     next();

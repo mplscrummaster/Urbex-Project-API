@@ -1,7 +1,6 @@
 import { Router } from "express";
 import db from "../db/index.js";
 import requireAuth from "../middleware/auth.js";
-import requireAuth from "../middleware/auth.js";
 import { canEditScenario, canEditMission } from "../middleware/rbac.js";
 
 const router = Router();

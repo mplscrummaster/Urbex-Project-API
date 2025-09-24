@@ -2,6 +2,7 @@ import { Router } from "express";
 import db from "../db/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { JWT_SECRET, BCRYPT_SALT_ROUNDS } from "../config/index.js";
 import requireAuth from "../middleware/auth.js";
 import { isAdmin } from "../middleware/rbac.js";
 const router = Router();
@@ -111,7 +112,6 @@ router.post("/login", (req, res) => {
     }
     if (!ok) return res.status(401).json("bad login or password");
 
-    const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
     const token = jwt.sign({ sub: row.id, mail: row.mail_user }, JWT_SECRET, {
       expiresIn: "2h",
     });
@@ -145,7 +145,7 @@ router.post(`/register`, (req, res) => {
       .get(mail_user);
     if (exists) return res.status(409).json({ error: "mail already used" });
 
-    const hash = bcrypt.hashSync(password_user, 10);
+    const hash = bcrypt.hashSync(password_user, BCRYPT_SALT_ROUNDS);
     const stmt = db.prepare(
       `INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user, role_user) VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
@@ -169,7 +169,6 @@ router.post(`/register`, (req, res) => {
       role_user: "player",
     };
 
-    const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
     const token = jwt.sign({ sub: user.id, mail: mail_user }, JWT_SECRET, {
       expiresIn: "2h",
     });

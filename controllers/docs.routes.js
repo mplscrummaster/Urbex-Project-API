@@ -41,6 +41,14 @@ const routes = [
   { method: "GET", path: "/api/me/player" },
   { method: "PUT", path: "/api/me/player" },
   { method: "GET", path: "/api/players" },
+  // communes
+  { method: "GET", path: "/api/communes" },
+  { method: "GET", path: "/api/communes/:id" },
+  { method: "POST", path: "/api/communes" },
+  { method: "PUT", path: "/api/communes/:id" },
+  { method: "DELETE", path: "/api/communes/:id" },
+  { method: "GET", path: "/api/scenarios/:id/communes" },
+  { method: "POST", path: "/api/scenarios/:id/communes" },
   // admin
   { method: "GET", path: "/api/admin/users" },
   { method: "PUT", path: "/api/admin/users/:id/role" },
