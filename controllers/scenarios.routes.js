@@ -9,7 +9,7 @@ router.get("/scenarios", (_req, res) => {
   try {
     const rows = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios`
+  `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios`
       )
       .all();
     res.json(rows);
@@ -27,7 +27,7 @@ router.get("/scenarios/:id", (req, res) => {
   try {
     const row = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`
+  `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
     if (!row) return res.status(404).json({ error: "scenario not found" });
@@ -43,7 +43,6 @@ router.post("/scenarios", requireAuth, (req, res) => {
   const title_scenario = body.title_scenario;
   if (!title_scenario)
     return res.status(400).json({ error: "title_scenario is required" });
-  const intro_scenario = body.intro_scenario ?? null;
   const url_img_scenario = body.url_img_scenario ?? null;
   const summary_scenario = body.summary_scenario ?? null;
   const difficulty = body.difficulty ?? "easy";
@@ -52,11 +51,10 @@ router.post("/scenarios", requireAuth, (req, res) => {
   try {
     const info = db
       .prepare(
-        `INSERT INTO scenarios (title_scenario,intro_scenario,url_img_scenario,summary_scenario,difficulty,estimated_duration_min,is_published,created_by) VALUES (?,?,?,?,?,?,?,?)`
+  `INSERT INTO scenarios (title_scenario,url_img_scenario,summary_scenario,difficulty,estimated_duration_min,is_published,created_by) VALUES (?,?,?,?,?,?,?)`
       )
       .run(
         title_scenario,
-        intro_scenario,
         url_img_scenario,
         summary_scenario,
         difficulty,
@@ -66,7 +64,7 @@ router.post("/scenarios", requireAuth, (req, res) => {
       );
     const created = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(Number(info.lastInsertRowid));
     return res.status(201).json(created);
@@ -82,7 +80,6 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
     return res.status(400).json({ error: "invalid id" });
   const allowed = [
     "title_scenario",
-    "intro_scenario",
     "url_img_scenario",
     "summary_scenario",
     "difficulty",
@@ -121,7 +118,7 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
       return res.status(404).json({ error: "scenario not found" });
     const updated = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published, created_by FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
     return res.json(updated);
@@ -170,11 +167,11 @@ router.get("/scenarios/:id/full", (req, res) => {
   }
   try {
     // Scenario
-    const scenario = db
-      .prepare(
-        `SELECT _id_scenario AS id, title_scenario, intro_scenario, url_img_scenario FROM scenarios WHERE _id_scenario = ?`
-      )
-      .get(id);
+      const scenario = db
+        .prepare(
+          `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
+        )
+        .get(id);
     if (!scenario) return res.status(404).json({ error: "scenario not found" });
 
     // Intro blocks

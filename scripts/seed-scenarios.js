@@ -21,39 +21,19 @@ try {
   }
 
   const stmt = db.prepare(
-    "INSERT INTO scenarios (title_scenario, intro_scenario, url_img_scenario) VALUES (?, ?, ?)"
+    "INSERT INTO scenarios (title_scenario, url_img_scenario) VALUES (?, ?)"
   );
   const data = [
-    [
-      "Les ruines oubliées",
-      "Une quête parmi des vestiges anciens où chaque pierre chuchote un secret.",
-      null,
-    ],
-    [
-      "Les ombres de la ville",
-      "Sous les néons et les tunnels, suivez la trace des silhouettes perdues.",
-      null,
-    ],
-    [
-      "Les passages interdits",
-      "Des portes scellées, des couloirs silencieux, et des symboles à déchiffrer.",
-      null,
-    ],
-    [
-      "Le réseau invisible",
-      "Au-delà des cartes, un maillage secret relie les points oubliés.",
-      null,
-    ],
-    [
-      "Sous la poussière du temps",
-      "Laissez vos pas soulever l'histoire enfouie sous la poussière.",
-      null,
-    ],
+    ["Les ruines oubliées", null],
+    ["Les ombres de la ville", null],
+    ["Les passages interdits", null],
+    ["Le réseau invisible", null],
+    ["Sous la poussière du temps", null],
   ];
 
   const insertMany = db.transaction((rows) => {
-    for (const [t, i, u] of rows) {
-      stmt.run(t, i, u);
+    for (const [t, u] of rows) {
+      stmt.run(t, u);
     }
   });
   insertMany(data);
