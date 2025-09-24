@@ -87,8 +87,6 @@ router.get("/missions/:id/blocks", (req, res) => {
   }
 });
 
-export default router;
-
 // CREATE intro block for scenario
 router.post("/scenarios/:id/intro/blocks", requireAuth, (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
@@ -410,3 +408,5 @@ router.put("/missions/:id/blocks/reorder", requireAuth, (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+export default router;

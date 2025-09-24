@@ -66,8 +66,6 @@ router.get("/missions/:id", (req, res) => {
   }
 });
 
-export default router;
-
 // CREATE mission in scenario
 router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
@@ -244,3 +242,5 @@ router.put("/scenarios/:id/missions/reorder", requireAuth, (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+export default router;
