@@ -6,6 +6,7 @@ import { canEditScenario } from "../middleware/rbac.js";
 const router = Router();
 
 // NOTE: Communes dataset is canonical & read-only; schema: name_fr, name_nl, name_de, geo_point_lat, geo_point_lon, geo_shape_geojson, postal_codes
+
 // GET /api/communes - list communes (q search across multilingual names, optional postal filter)
 router.get("/communes", (req, res) => {
   try {
@@ -67,21 +68,6 @@ router.get("/communes/:id", (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-});
-
-// POST /api/communes - disabled (read-only dataset)
-router.post("/communes", (_req, res) => {
-  return res.status(405).json({ error: "communes are read-only" });
-});
-
-// PUT /api/communes/:id - disabled (read-only dataset)
-router.put("/communes/:id", (_req, res) => {
-  return res.status(405).json({ error: "communes are read-only" });
-});
-
-// DELETE /api/communes/:id - disabled (read-only dataset)
-router.delete("/communes/:id", (_req, res) => {
-  return res.status(405).json({ error: "communes are read-only" });
 });
 
 // GET /api/scenarios/:id/communes - communes linked to scenario
