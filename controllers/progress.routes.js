@@ -7,7 +7,9 @@ const router = express.Router();
 // Helpers
 function getScenarioProgress(userId, scenarioId) {
   const scenario = db
-    .prepare(`SELECT * FROM scenarios WHERE _id_scenario = ?`)
+    .prepare(
+      `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
+    )
     .get(scenarioId);
   if (!scenario) return null;
   const progress = db
@@ -53,8 +55,9 @@ function getScenarioProgress(userId, scenarioId) {
 
   return {
     scenario: {
-      _id_scenario: scenario._id_scenario,
+      id: scenario._id_scenario,
       title: scenario.title_scenario,
+      is_published: scenario.is_published,
     },
     progress: progress
       ? {
@@ -73,7 +76,7 @@ router.post("/scenarios/:id/start", requireAuth, (req, res) => {
   const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
   const scenario = db
-    .prepare(`SELECT * FROM scenarios WHERE _id_scenario = ?`)
+    .prepare(`SELECT _id_scenario FROM scenarios WHERE _id_scenario = ?`)
     .get(scenarioId);
   if (!scenario) return res.status(404).json({ error: "Scenario not found" });
 

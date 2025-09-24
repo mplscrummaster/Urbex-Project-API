@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS scenarios (
 );
 
 CREATE INDEX IF NOT EXISTS idx_scenarios_creator ON scenarios(created_by);
+CREATE INDEX IF NOT EXISTS idx_scenarios_published ON scenarios(is_published);
 
 -- Missions belong to a scenario and include order, GPS, riddle, and answer
 CREATE TABLE IF NOT EXISTS missions (

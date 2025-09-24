@@ -1,14 +1,14 @@
 import db from "../db/index.js";
 
-export function isAdmin(userId) {
+export const isAdmin = (userId) => {
   if (!userId) return false;
   const row = db
     .prepare("SELECT role_user FROM users WHERE _id_user = ?")
     .get(userId);
   return row?.role_user === "admin";
-}
+};
 
-export function canEditScenario(userId, scenarioId) {
+export const canEditScenario = (userId, scenarioId) => {
   if (!userId || !scenarioId) return false;
   if (isAdmin(userId)) return true;
   const owner = db
@@ -16,18 +16,18 @@ export function canEditScenario(userId, scenarioId) {
     .get(scenarioId);
   if (!owner) return false;
   return owner.created_by === userId;
-}
+};
 
-export function canEditMission(userId, missionId) {
+export const canEditMission = (userId, missionId) => {
   if (!userId || !missionId) return false;
   const row = db
     .prepare("SELECT _id_scenario FROM missions WHERE _id_mission = ?")
     .get(missionId);
   if (!row) return false;
   return canEditScenario(userId, row._id_scenario);
-}
+};
 
-export function canEditBlock(userId, blockId) {
+export const canEditBlock = (userId, blockId) => {
   if (!userId || !blockId) return false;
   const b = db
     .prepare(
@@ -39,7 +39,7 @@ export function canEditBlock(userId, blockId) {
     return canEditMission(userId, b._id_mission);
   }
   return canEditScenario(userId, b._id_scenario);
-}
+};
 
 export default {
   isAdmin,
