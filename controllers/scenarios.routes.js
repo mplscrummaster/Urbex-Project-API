@@ -9,7 +9,7 @@ router.get("/scenarios", (_req, res) => {
   try {
     const rows = db
       .prepare(
-  `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios`
+        `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios`
       )
       .all();
     res.json(rows);
@@ -27,7 +27,7 @@ router.get("/scenarios/:id", (req, res) => {
   try {
     const row = db
       .prepare(
-  `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
     if (!row) return res.status(404).json({ error: "scenario not found" });
@@ -51,7 +51,7 @@ router.post("/scenarios", requireAuth, (req, res) => {
   try {
     const info = db
       .prepare(
-  `INSERT INTO scenarios (title_scenario,url_img_scenario,summary_scenario,difficulty,estimated_duration_min,is_published,created_by) VALUES (?,?,?,?,?,?,?)`
+        `INSERT INTO scenarios (title_scenario,url_img_scenario,summary_scenario,difficulty,estimated_duration_min,is_published,created_by) VALUES (?,?,?,?,?,?,?)`
       )
       .run(
         title_scenario,
@@ -167,11 +167,11 @@ router.get("/scenarios/:id/full", (req, res) => {
   }
   try {
     // Scenario
-      const scenario = db
-        .prepare(
-          `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
-        )
-        .get(id);
+    const scenario = db
+      .prepare(
+        `SELECT _id_scenario AS id, title_scenario, url_img_scenario, summary_scenario, difficulty, estimated_duration_min, is_published FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(id);
     if (!scenario) return res.status(404).json({ error: "scenario not found" });
 
     // Intro blocks
