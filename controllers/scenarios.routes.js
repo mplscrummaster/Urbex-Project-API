@@ -4,39 +4,6 @@ import requireAuth from "../middleware/auth.js";
 
 const router = Router();
 
-// GET /api/scenarios — liste des scénarios (lecture seule)
-router.get("/scenarios", (_req, res) => {
-  try {
-    const rows = db
-      .prepare(
-        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at FROM scenarios`
-      )
-      .all();
-    res.json(rows);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/scenarios/:id — un scénario par id
-router.get("/scenarios/:id", (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0) {
-    return res.status(400).json({ error: "invalid id" });
-  }
-  try {
-    const row = db
-      .prepare(
-        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at FROM scenarios WHERE _id_scenario = ?`
-      )
-      .get(id);
-    if (!row) return res.status(404).json({ error: "scenario not found" });
-    res.json(row);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
 // CREATE scenario
 router.post("/scenarios", requireAuth, (req, res) => {
   const body = req.body || {};
@@ -65,86 +32,40 @@ router.post("/scenarios", requireAuth, (req, res) => {
   }
 });
 
-// UPDATE scenario
-router.put("/scenarios/:id", requireAuth, (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0)
-    return res.status(400).json({ error: "invalid id" });
-  const allowed = ["title_scenario", "is_published"];
-  const payload = req.body || {};
-  const keys = Object.keys(payload).filter((k) => allowed.includes(k));
-  if (keys.length === 0)
-    return res.status(400).json({ error: "no valid fields to update" });
+// READ scenarios
+router.get("/scenarios", (_req, res) => {
   try {
-    // RBAC: allow if admin or author
-    const owner = db
-      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
-      .get(id);
-    if (!owner) return res.status(404).json({ error: "scenario not found" });
-    const me = db
-      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
-      .get(req.auth?.sub);
-    const isAdmin = me?.role_user === "admin";
-    const isAuthor = owner?.created_by === req.auth?.sub;
-    if (!isAdmin && !isAuthor)
-      return res.status(403).json({ error: "forbidden" });
-
-    // Normalize boolean-like field
-    if (keys.includes("is_published")) {
-      payload.is_published = payload.is_published ? 1 : 0;
-    }
-    const setClause =
-      keys.map((k) => `${k} = ?`).join(", ") + ", updated_at = datetime('now')";
-    const values = keys.map((k) => payload[k]);
-    const info = db
-      .prepare(`UPDATE scenarios SET ${setClause} WHERE _id_scenario = ?`)
-      .run(...values, id);
-    if (info.changes === 0)
-      return res.status(404).json({ error: "scenario not found" });
-    const updated = db
+    const rows = db
       .prepare(
-        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at, created_by FROM scenarios WHERE _id_scenario = ?`
+        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at FROM scenarios`
+      )
+      .all();
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ scenario
+router.get("/scenarios/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: "invalid id" });
+  }
+  try {
+    const row = db
+      .prepare(
+        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at FROM scenarios WHERE _id_scenario = ?`
       )
       .get(id);
-    return res.json(updated);
+    if (!row) return res.status(404).json({ error: "scenario not found" });
+    res.json(row);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE scenario (cascades to missions and blocks)
-router.delete("/scenarios/:id", requireAuth, (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0)
-    return res.status(400).json({ error: "invalid id" });
-  try {
-    // RBAC: allow if admin or author
-    const owner = db
-      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
-      .get(id);
-    if (!owner) return res.status(404).json({ error: "scenario not found" });
-    const me = db
-      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
-      .get(req.auth?.sub);
-    const isAdmin = me?.role_user === "admin";
-    const isAuthor = owner?.created_by === req.auth?.sub;
-    if (!isAdmin && !isAuthor)
-      return res.status(403).json({ error: "forbidden" });
-
-    const info = db
-      .prepare("DELETE FROM scenarios WHERE _id_scenario = ?")
-      .run(id);
-    if (info.changes === 0)
-      return res.status(404).json({ error: "scenario not found" });
-    return res.status(204).send();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-export default router;
-
-// GET /api/scenarios/:id/full — scenario + intro blocks + missions (with blocks) + outro blocks
+// READ full scenario
 router.get("/scenarios/:id/full", (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(id) || id <= 0) {
@@ -263,3 +184,82 @@ router.get("/scenarios/:id/full", (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// UPDATE scenario
+router.put("/scenarios/:id", requireAuth, (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0)
+    return res.status(400).json({ error: "invalid id" });
+  const allowed = ["title_scenario", "is_published"];
+  const payload = req.body || {};
+  const keys = Object.keys(payload).filter((k) => allowed.includes(k));
+  if (keys.length === 0)
+    return res.status(400).json({ error: "no valid fields to update" });
+  try {
+    // RBAC: allow if admin or author
+    const owner = db
+      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
+      .get(id);
+    if (!owner) return res.status(404).json({ error: "scenario not found" });
+    const me = db
+      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
+      .get(req.auth?.sub);
+    const isAdmin = me?.role_user === "admin";
+    const isAuthor = owner?.created_by === req.auth?.sub;
+    if (!isAdmin && !isAuthor)
+      return res.status(403).json({ error: "forbidden" });
+
+    // Normalize boolean-like field
+    if (keys.includes("is_published")) {
+      payload.is_published = payload.is_published ? 1 : 0;
+    }
+    const setClause =
+      keys.map((k) => `${k} = ?`).join(", ") + ", updated_at = datetime('now')";
+    const values = keys.map((k) => payload[k]);
+    const info = db
+      .prepare(`UPDATE scenarios SET ${setClause} WHERE _id_scenario = ?`)
+      .run(...values, id);
+    if (info.changes === 0)
+      return res.status(404).json({ error: "scenario not found" });
+    const updated = db
+      .prepare(
+        `SELECT _id_scenario AS id, title_scenario, is_published, created_at, updated_at, created_by FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(id);
+    return res.json(updated);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE scenario (cascades to missions and blocks)
+router.delete("/scenarios/:id", requireAuth, (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0)
+    return res.status(400).json({ error: "invalid id" });
+  try {
+    // RBAC: allow if admin or author
+    const owner = db
+      .prepare("SELECT created_by FROM scenarios WHERE _id_scenario = ?")
+      .get(id);
+    if (!owner) return res.status(404).json({ error: "scenario not found" });
+    const me = db
+      .prepare("SELECT role_user FROM users WHERE _id_user = ?")
+      .get(req.auth?.sub);
+    const isAdmin = me?.role_user === "admin";
+    const isAuthor = owner?.created_by === req.auth?.sub;
+    if (!isAdmin && !isAuthor)
+      return res.status(403).json({ error: "forbidden" });
+
+    const info = db
+      .prepare("DELETE FROM scenarios WHERE _id_scenario = ?")
+      .run(id);
+    if (info.changes === 0)
+      return res.status(404).json({ error: "scenario not found" });
+    return res.status(204).send();
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
