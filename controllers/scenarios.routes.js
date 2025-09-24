@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db from "../db/index.js";
-import { requireAuth } from "../middleware/auth.js";
+import requireAuth from "../middleware/auth.js";
 
 const router = Router();
 
@@ -236,9 +236,8 @@ router.get("/scenarios/:id/full", (req, res) => {
     // Optionally enrich with progress if Authorization header is present and valid
     let progressData = null;
     try {
-      // naive reuse of scenario_progress tables if auth decoded earlier in pipeline; if not ignore silently
-      if (req.auth?._id_user) {
-        const userId = req.auth._id_user;
+      if (req.auth?.sub) {
+        const userId = req.auth.sub;
         const sp = db
           .prepare(
             `SELECT status, bookmarked, started_at, completed_at FROM scenario_progress WHERE _id_user=? AND _id_scenario=?`
@@ -265,7 +264,7 @@ router.get("/scenarios/:id/full", (req, res) => {
         };
       }
     } catch (_e) {
-      // ignore progress enrichment errors to keep backwards compatibility
+      // silent ignore
     }
 
     res.json({

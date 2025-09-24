@@ -1,6 +1,6 @@
 import express from "express";
 import db from "../db/index.js";
-import { requireAuth } from "../middleware/auth.js";
+import requireAuth from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -52,7 +52,10 @@ function getScenarioProgress(userId, scenarioId) {
   });
 
   return {
-    scenario: { _id_scenario: scenario._id_scenario, title: scenario.title },
+    scenario: {
+      _id_scenario: scenario._id_scenario,
+      title: scenario.title_scenario,
+    },
     progress: progress
       ? {
           status: progress.status,
@@ -67,7 +70,7 @@ function getScenarioProgress(userId, scenarioId) {
 
 // Start (or bookmark) a scenario
 router.post("/scenarios/:id/start", requireAuth, (req, res) => {
-  const userId = req.auth._id_user;
+  const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
   const scenario = db
     .prepare(`SELECT * FROM scenarios WHERE _id_scenario = ?`)
@@ -101,7 +104,7 @@ router.post("/scenarios/:id/start", requireAuth, (req, res) => {
 
 // Explicit bookmark without starting (status stays not_started)
 router.post("/scenarios/:id/bookmark", requireAuth, (req, res) => {
-  const userId = req.auth._id_user;
+  const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
   const scenario = db
     .prepare(`SELECT 1 FROM scenarios WHERE _id_scenario = ?`)
@@ -127,7 +130,7 @@ router.post("/scenarios/:id/bookmark", requireAuth, (req, res) => {
 
 // Remove bookmark: delete progress & related mission progress to fully reset
 router.delete("/scenarios/:id/bookmark", requireAuth, (req, res) => {
-  const userId = req.auth._id_user;
+  const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
   const existing = db
     .prepare(
@@ -149,7 +152,7 @@ router.delete("/scenarios/:id/bookmark", requireAuth, (req, res) => {
 
 // Complete a mission
 router.post("/missions/:id/complete", requireAuth, (req, res) => {
-  const userId = req.auth._id_user;
+  const userId = req.auth.sub;
   const missionId = Number(req.params.id);
   const mission = db
     .prepare(`SELECT * FROM missions WHERE _id_mission = ?`)
@@ -218,24 +221,27 @@ router.post("/missions/:id/complete", requireAuth, (req, res) => {
 
 // Get scenario progress detail
 router.get("/scenarios/:id/progress", requireAuth, (req, res) => {
-  const data = getScenarioProgress(req.auth._id_user, Number(req.params.id));
+  const data = getScenarioProgress(req.auth.sub, Number(req.params.id));
   if (!data) return res.status(404).json({ error: "Scenario not found" });
   return res.json(data);
 });
 
 // List my scenarios with progress (bookmarks first)
 router.get("/me/scenarios", requireAuth, (req, res) => {
-  const userId = req.auth._id_user;
+  const userId = req.auth.sub;
   const rows = db
     .prepare(
-      `
-    SELECT s._id_scenario, s.title, COALESCE(sp.status,'not_started') as status, COALESCE(sp.bookmarked,0) as bookmarked,
-           sp.started_at, sp.completed_at
-    FROM scenarios s
-    LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
-    WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
-    ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title
-  `
+      `SELECT 
+         s._id_scenario AS id,
+         s.title_scenario AS title,
+         COALESCE(sp.status,'not_started') as status,
+         COALESCE(sp.bookmarked,0) as bookmarked,
+         sp.started_at,
+         sp.completed_at
+       FROM scenarios s
+       LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
+       WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
+       ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title_scenario`
     )
     .all(userId);
   return res.json(rows);
