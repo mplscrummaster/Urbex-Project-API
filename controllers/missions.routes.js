@@ -5,66 +5,7 @@ import { canEditScenario, canEditMission } from "../middleware/rbac.js";
 
 const router = Router();
 
-// GET /api/scenarios/:id/missions — ordered missions for a scenario
-router.get("/scenarios/:id/missions", (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0) {
-    return res.status(400).json({ error: "invalid id" });
-  }
-  try {
-    const rows = db
-      .prepare(
-        `SELECT 
-           _id_mission AS id,
-           position_mission AS position,
-           title_mission AS title,
-           latitude,
-           longitude,
-           riddle_text,
-           answer_word
-         FROM missions
-         WHERE _id_scenario = ?
-         ORDER BY position_mission ASC`
-      )
-      .all(id);
-    res.json(rows);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/missions/:id — single mission detail
-router.get("/missions/:id", (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0) {
-    return res.status(400).json({ error: "invalid id" });
-  }
-  try {
-    const row = db
-      .prepare(
-        `SELECT 
-           m._id_mission AS id,
-           m.position_mission AS position,
-           m.title_mission AS title,
-           m.latitude,
-           m.longitude,
-           m.riddle_text,
-           m.answer_word,
-           s._id_scenario AS scenario_id,
-           s.title_scenario AS scenario_title
-         FROM missions m
-         JOIN scenarios s ON s._id_scenario = m._id_scenario
-         WHERE m._id_mission = ?`
-      )
-      .get(id);
-    if (!row) return res.status(404).json({ error: "mission not found" });
-    res.json(row);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// CREATE mission in scenario
+// CREATE scenario mission
 router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(scenarioId) || scenarioId <= 0) {
@@ -140,6 +81,65 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
   }
 });
 
+// READ mission
+router.get("/missions/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: "invalid id" });
+  }
+  try {
+    const row = db
+      .prepare(
+        `SELECT 
+           m._id_mission AS id,
+           m.position_mission AS position,
+           m.title_mission AS title,
+           m.latitude,
+           m.longitude,
+           m.riddle_text,
+           m.answer_word,
+           s._id_scenario AS scenario_id,
+           s.title_scenario AS scenario_title
+         FROM missions m
+         JOIN scenarios s ON s._id_scenario = m._id_scenario
+         WHERE m._id_mission = ?`
+      )
+      .get(id);
+    if (!row) return res.status(404).json({ error: "mission not found" });
+    res.json(row);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ scenario missions
+router.get("/scenarios/:id/missions", (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: "invalid id" });
+  }
+  try {
+    const rows = db
+      .prepare(
+        `SELECT 
+           _id_mission AS id,
+           position_mission AS position,
+           title_mission AS title,
+           latitude,
+           longitude,
+           riddle_text,
+           answer_word
+         FROM missions
+         WHERE _id_scenario = ?
+         ORDER BY position_mission ASC`
+      )
+      .all(id);
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // UPDATE mission
 router.put("/missions/:id", requireAuth, (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
@@ -184,26 +184,7 @@ router.put("/missions/:id", requireAuth, (req, res) => {
   }
 });
 
-// DELETE mission (and cascade delete blocks)
-router.delete("/missions/:id", requireAuth, (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id <= 0)
-    return res.status(400).json({ error: "invalid id" });
-  try {
-    if (!canEditMission(req.auth?.sub, id))
-      return res.status(403).json({ error: "forbidden" });
-    const info = db
-      .prepare("DELETE FROM missions WHERE _id_mission = ?")
-      .run(id);
-    if (info.changes === 0)
-      return res.status(404).json({ error: "mission not found" });
-    return res.status(204).send();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// REORDER missions within a scenario: body = [{id, position}, ...]
+// UPDATE scenario mission order
 router.put("/scenarios/:id/missions/reorder", requireAuth, (req, res) => {
   const scenarioId = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(scenarioId) || scenarioId <= 0)
@@ -232,6 +213,25 @@ router.put("/scenarios/:id/missions/reorder", requireAuth, (req, res) => {
       )
       .all(scenarioId);
     return res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE mission
+router.delete("/missions/:id", requireAuth, (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0)
+    return res.status(400).json({ error: "invalid id" });
+  try {
+    if (!canEditMission(req.auth?.sub, id))
+      return res.status(403).json({ error: "forbidden" });
+    const info = db
+      .prepare("DELETE FROM missions WHERE _id_mission = ?")
+      .run(id);
+    if (info.changes === 0)
+      return res.status(404).json({ error: "mission not found" });
+    return res.status(204).send();
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
