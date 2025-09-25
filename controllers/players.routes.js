@@ -12,13 +12,11 @@ const isAdmin = (userId) => {
 };
 
 // READ players
-router.get("/players", requireAuth, (req, res) => {
+router.get("/players", (req, res) => {
   try {
-    if (!isAdmin(req.auth?.sub))
-      return res.status(403).json({ error: "forbidden" });
     const rows = db
       .prepare(
-        `SELECT p._id_player AS id, u.username_user AS username, u.mail_user AS mail, p.nickname, p.score, p.level, p.xp
+        `SELECT p._id_player AS id, u.username_user AS username, p.nickname, p.url_img_avatar, p.score, p.level, p.xp
          FROM players p JOIN users u ON u._id_user = p._id_user`
       )
       .all();
@@ -28,7 +26,26 @@ router.get("/players", requireAuth, (req, res) => {
   }
 });
 
-// READ player profile (own)
+// READ player
+router.get("/players/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0)
+    return res.status(400).json({ error: "invalid id" });
+  try {
+    const row = db
+      .prepare(
+        `SELECT p._id_player AS id, u.username_user AS username, p.nickname, p.url_img_avatar, p.score, p.level, p.xp
+         FROM players p JOIN users u ON u._id_user = p._id_user WHERE p._id_player = ?`
+      )
+      .get(id);
+    if (!row) return res.status(404).json({ error: "player not found" });
+    res.json(row);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ player profile (self)
 router.get("/me/player", requireAuth, (req, res) => {
   try {
     const player = db
@@ -44,7 +61,7 @@ router.get("/me/player", requireAuth, (req, res) => {
   }
 });
 
-// UPDATE player profile (own)
+// UPDATE player profile (self)
 router.put("/me/player", requireAuth, (req, res) => {
   // Accept some alias field names for dev ergonomics
   const allowed = ["nickname", "bio", "url_img_avatar"];
@@ -53,7 +70,6 @@ router.put("/me/player", requireAuth, (req, res) => {
     description: "bio",
     avatar: "url_img_avatar",
     avatar_url: "url_img_avatar",
-    url_img_user: "url_img_avatar",
   };
   const raw = req.body || {};
   const payload = {};

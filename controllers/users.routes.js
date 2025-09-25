@@ -18,7 +18,7 @@ router.post("/login", (req, res) => {
   try {
     const row = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user, password_user FROM users WHERE mail_user = ?`
+        `SELECT _id_user AS id, username_user, mail_user, role_user, password_user FROM users WHERE mail_user = ?`
       )
       .get(mail_user);
     if (!row) return res.status(401).json("bad login or password");
@@ -49,14 +49,7 @@ router.post("/login", (req, res) => {
 
 // REGISTER
 router.post(`/register`, (req, res) => {
-  const {
-    username_user,
-    mail_user,
-    password_user,
-    firstname_user,
-    name_user,
-    url_img_user,
-  } = req.body || {};
+  const { username_user, mail_user, password_user } = req.body || {};
   if (!username_user || !mail_user || !password_user) {
     return res
       .status(400)
@@ -70,25 +63,19 @@ router.post(`/register`, (req, res) => {
 
     const hash = bcrypt.hashSync(password_user, BCRYPT_SALT_ROUNDS);
     const stmt = db.prepare(
-      `INSERT INTO users (username_user, password_user, mail_user, firstname_user, name_user, url_img_user, role_user) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO users (username_user, password_user, mail_user, role_user) VALUES (?, ?, ?, ?)`
     );
-    const info = stmt.run(
-      username_user,
-      hash,
-      mail_user,
-      firstname_user ?? null,
-      name_user ?? null,
-      url_img_user ?? null,
-      "player"
-    );
+    const info = stmt.run(username_user, hash, mail_user, "player");
+
+    // Create default player profile for this user (nickname defaults to username)
+    db.prepare(
+      `INSERT INTO players (_id_user, nickname, bio, url_img_avatar, score, level, xp) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run(Number(info.lastInsertRowid), username_user, null, null, 0, 1, 0);
 
     const user = {
       id: Number(info.lastInsertRowid),
       username_user,
       mail_user,
-      firstname_user: firstname_user ?? null,
-      name_user: name_user ?? null,
-      url_img_user: url_img_user ?? null,
       role_user: "player",
     };
 
@@ -118,7 +105,7 @@ router.get("/users", requireAuth, (req, res) => {
   try {
     const rows = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user FROM users`
+        `SELECT _id_user AS id, username_user, mail_user, role_user FROM users`
       )
       .all();
     res.json(rows);
@@ -142,7 +129,7 @@ router.get("/users/:id", requireAuth, (req, res) => {
     }
     const row = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE _id_user = ?`
+        `SELECT _id_user AS id, username_user, mail_user, role_user FROM users WHERE _id_user = ?`
       )
       .get(id);
     if (!row) return res.status(404).json({ error: "user not found" });
@@ -157,7 +144,7 @@ router.get("/me", requireAuth, (req, res) => {
   try {
     const user = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user FROM users WHERE _id_user = ?`
+        `SELECT _id_user AS id, username_user, mail_user, role_user FROM users WHERE _id_user = ?`
       )
       .get(req.auth?.sub);
     if (!user) return res.status(404).json({ error: "user not found" });
@@ -186,7 +173,7 @@ router.put("/users/:id/role", requireAuth, (req, res) => {
       return res.status(404).json({ error: "user not found" });
     const user = db
       .prepare(
-        `SELECT _id_user AS id, username_user, mail_user, firstname_user, name_user, url_img_user, role_user FROM users WHERE _id_user = ?`
+        `SELECT _id_user AS id, username_user, mail_user, role_user FROM users WHERE _id_user = ?`
       )
       .get(id);
     res.json(user);

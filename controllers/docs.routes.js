@@ -52,6 +52,7 @@ export const routes = [
   { method: "GET", path: "/api/me/player" },
   { method: "PUT", path: "/api/me/player" },
   { method: "GET", path: "/api/players" },
+  { method: "GET", path: "/api/players/:id" },
   // communes (read-only)
   { method: "GET", path: "/api/communes" },
   { method: "GET", path: "/api/communes/:id" },

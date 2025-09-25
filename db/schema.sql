@@ -5,9 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
   username_user  TEXT NOT NULL UNIQUE,
   password_user  TEXT NOT NULL,
   mail_user      TEXT NOT NULL UNIQUE,
-  firstname_user TEXT,
-  name_user      TEXT,
-  url_img_user   TEXT,
   role_user      TEXT NOT NULL DEFAULT 'player' CHECK (role_user IN ('player','scenarist','admin'))
 );
 
