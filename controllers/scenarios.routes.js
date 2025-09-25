@@ -99,7 +99,7 @@ router.get("/scenarios/:id/full", (req, res) => {
     // Missions for scenario (ordered)
     const missions = db
       .prepare(
-        `SELECT _id_mission AS id, position_mission AS position, title_mission AS title, latitude, longitude, riddle_text, answer_word, url_img_mission AS url_img
+        `SELECT _id_mission AS id, position_mission AS position, title_mission AS title, latitude, longitude, riddle_text, answer_word
          FROM missions WHERE _id_scenario = ? ORDER BY position_mission ASC`
       )
       .all(id);

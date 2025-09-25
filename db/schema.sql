@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS missions (
   longitude         REAL NOT NULL,
   riddle_text       TEXT NOT NULL,
   answer_word       TEXT NOT NULL,
-  url_img_mission   TEXT,
   FOREIGN KEY (_id_scenario) REFERENCES scenarios(_id_scenario) ON DELETE CASCADE
 );
 

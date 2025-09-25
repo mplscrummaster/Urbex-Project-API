@@ -21,8 +21,7 @@ router.get("/scenarios/:id/missions", (req, res) => {
            latitude,
            longitude,
            riddle_text,
-           answer_word,
-           url_img_mission AS url_img
+           answer_word
          FROM missions
          WHERE _id_scenario = ?
          ORDER BY position_mission ASC`
@@ -51,7 +50,6 @@ router.get("/missions/:id", (req, res) => {
            m.longitude,
            m.riddle_text,
            m.answer_word,
-           m.url_img_mission AS url_img,
            s._id_scenario AS scenario_id,
            s.title_scenario AS scenario_title
          FROM missions m
@@ -78,7 +76,7 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
     longitude,
     riddle_text,
     answer_word,
-    url_img_mission = null,
+
     position_mission,
   } = req.body || {};
   if (
@@ -113,8 +111,8 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
     }
 
     const stmt = db.prepare(`INSERT INTO missions
-      (_id_scenario, position_mission, title_mission, latitude, longitude, riddle_text, answer_word, url_img_mission)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+      (_id_scenario, position_mission, title_mission, latitude, longitude, riddle_text, answer_word)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`);
     const info = stmt.run(
       scenarioId,
       position,
@@ -122,8 +120,7 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
       latitude,
       longitude,
       riddle_text,
-      answer_word,
-      url_img_mission
+      answer_word
     );
 
     const created = db
@@ -133,8 +130,7 @@ router.post("/scenarios/:id/missions", requireAuth, (req, res) => {
         position_mission AS position,
         title_mission AS title,
         latitude, longitude,
-        riddle_text, answer_word,
-        url_img_mission AS url_img
+        riddle_text, answer_word
       FROM missions WHERE _id_mission = ?`
       )
       .get(Number(info.lastInsertRowid));
@@ -156,7 +152,6 @@ router.put("/missions/:id", requireAuth, (req, res) => {
     "longitude",
     "riddle_text",
     "answer_word",
-    "url_img_mission",
   ];
   const payload = req.body || {};
   const keys = Object.keys(payload).filter((k) => allowed.includes(k));
@@ -179,8 +174,7 @@ router.put("/missions/:id", requireAuth, (req, res) => {
         position_mission AS position,
         title_mission AS title,
         latitude, longitude,
-        riddle_text, answer_word,
-        url_img_mission AS url_img
+        riddle_text, answer_word
       FROM missions WHERE _id_mission = ?`
       )
       .get(id);
@@ -233,7 +227,7 @@ router.put("/scenarios/:id/missions/reorder", requireAuth, (req, res) => {
     trx(items);
     const rows = db
       .prepare(
-        `SELECT _id_mission AS id, position_mission AS position, title_mission AS title, latitude, longitude, riddle_text, answer_word, url_img_mission AS url_img
+        `SELECT _id_mission AS id, position_mission AS position, title_mission AS title, latitude, longitude, riddle_text, answer_word
        FROM missions WHERE _id_scenario = ? ORDER BY position_mission ASC`
       )
       .all(scenarioId);
