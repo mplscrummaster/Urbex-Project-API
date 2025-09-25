@@ -57,7 +57,7 @@ router.post("/scenarios/:id/bookmark", requireAuth, (req, res) => {
       )
       .all(scenarioId);
     const depsMap = depsRows.reduce((acc, r) => {
-      (acc[r._id_mission] ||= []).push(r._id_mission_required);
+      (acc[r._id_mission] = acc[r._id_mission] || []).push(r._id_mission_required);
       return acc;
     }, {});
     const missionsWithState = missions.map((m) => {
