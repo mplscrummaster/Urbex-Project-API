@@ -23,7 +23,7 @@ const LINKS = [
   { title: "Chroniques souterraines", _id_commune: 925 }, // Eeklo
 ];
 
-function seedScenarioCommunes() {
+const seedScenarioCommunes = () => {
   const findScenario = db.prepare(
     "SELECT _id_scenario FROM scenarios WHERE title_scenario = ?"
   );
@@ -55,6 +55,6 @@ function seedScenarioCommunes() {
   if (warnings.length) {
     for (const w of warnings) console.warn("WARN:", w);
   }
-}
+};
 
 seedScenarioCommunes();

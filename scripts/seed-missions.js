@@ -3,9 +3,9 @@ import db from "../db/index.js";
 
 const DB_PATH = process.env.DB_PATH || "db/bdd.db";
 
-function exit(code = 0) {
+const exit = (code = 0) => {
   process.exit(code);
-}
+};
 
 if (!fs.existsSync(DB_PATH)) {
   console.error(`Database not found at ${DB_PATH}`);
@@ -82,40 +82,40 @@ try {
     },
   ];
 
-  function pickTitles(offset, n) {
+  const pickTitles = (offset, n) => {
     const arr = [];
     for (let i = 0; i < n; i++) {
       arr.push(titlePool[(offset + i) % titlePool.length]);
     }
     return arr;
-  }
+  };
 
-  function pickRiddle(i) {
+  const pickRiddle = (i) => {
     return riddlePool[i % riddlePool.length];
-  }
+  };
 
   // Belgium-ish bounding box (rough): lat 49.5–51.6, lon 2.5–6.5
-  function randomBetween(min, max) {
+  const randomBetween = (min, max) => {
     return Math.random() * (max - min) + min;
-  }
-  function seededBetween(seed, min, max) {
+  };
+  const seededBetween = (seed, min, max) => {
     // simple LCG based on seed
     let x = (Math.sin(seed) * 10000) % 1;
     if (x < 0) x = -x;
     return x * (max - min) + min;
-  }
+  };
 
-  function clusterForScenario(scnId) {
+  const clusterForScenario = (scnId) => {
     const latCenter = seededBetween(scnId * 1.7, 49.8, 51.2);
     const lonCenter = seededBetween(scnId * 2.3, 3.0, 5.8);
     return { latCenter, lonCenter };
-  }
-  function jitter(seed, maxDelta) {
+  };
+  const jitter = (seed, maxDelta) => {
     // returns value in [-maxDelta, +maxDelta]
     let x = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
     if (x < 0) x = -x;
     return (x - 0.5) * 2 * maxDelta;
-  }
+  };
 
   const stmt = db.prepare(
     `INSERT INTO missions (_id_scenario, position_mission, title_mission, latitude, longitude, riddle_text, answer_word)

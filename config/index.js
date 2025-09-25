@@ -1,10 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-function number(val, fallback) {
+const number = (val, fallback) => {
   const n = Number(val);
   return Number.isFinite(n) ? n : fallback;
-}
+};
 
 export const NODE_ENV = process.env.NODE_ENV || "development";
 export const PORT = number(process.env.PORT, 3000);

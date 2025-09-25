@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/index.js";
 
 // Simple JWT auth middleware shared across routers
-export function requireAuth(req, res, next) {
+export const requireAuth = (req, res, next) => {
   try {
     const auth = req.headers["authorization"] || "";
     const parts = auth.split(" ");
@@ -18,6 +18,6 @@ export function requireAuth(req, res, next) {
   } catch (e) {
     return res.status(401).json({ error: "invalid or expired token" });
   }
-}
+};
 
 export default requireAuth;

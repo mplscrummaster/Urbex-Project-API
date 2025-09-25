@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 
 const DB_PATH = process.env.DB_PATH || "db/bdd.db";
 
-function exit(code = 0) {
+const exit = (code = 0) => {
   process.exit(code);
-}
+};
 
 if (!fs.existsSync(DB_PATH)) {
   console.error(`Database not found at ${DB_PATH}`);
