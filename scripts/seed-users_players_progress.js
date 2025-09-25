@@ -67,7 +67,7 @@ try {
   // 3) Create about 10 players
   const players = Array.from({ length: 10 }).map((_, i) => [
     `player${String(i + 1).padStart(2, "0")}`,
-    `player${String(i + 1).padStart(2, "0")}@example.com`,
+    `player${String(i + 1).padStart(2, "0")}` + "@example.com",
   ]);
   const playerIds = players.map(([u, m]) => ensureUser(u, m, "player"));
 

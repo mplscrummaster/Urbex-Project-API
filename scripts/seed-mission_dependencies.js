@@ -35,11 +35,8 @@ try {
     for (const sc of scenarios) {
       const ms = getMissions.all(sc._id_scenario);
       if (ms.length < 3) continue;
-      // Map by position for convenience
       const byPos = new Map(ms.map((m) => [m.position_mission, m]));
 
-      // Examples per scenario (idempotent via OR IGNORE):
-      // 3 depends on 2
       if (byPos.has(3) && byPos.has(2)) {
         const info = insert.run(
           byPos.get(3)._id_mission,
@@ -47,7 +44,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 3 also depends on 1 (if exists) to showcase multiple prerequisites
       if (byPos.has(3) && byPos.has(1)) {
         const info = insert.run(
           byPos.get(3)._id_mission,
@@ -55,7 +51,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 4 depends on 2 (if exists)
       if (byPos.has(4) && byPos.has(2)) {
         const info = insert.run(
           byPos.get(4)._id_mission,
@@ -63,7 +58,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 4 also depends on 3 (if exists)
       if (byPos.has(4) && byPos.has(3)) {
         const info = insert.run(
           byPos.get(4)._id_mission,
@@ -71,7 +65,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 5 depends on 3 (if exists)
       if (byPos.has(5) && byPos.has(3)) {
         const info = insert.run(
           byPos.get(5)._id_mission,
@@ -79,7 +72,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 5 also depends on 2 (if exists)
       if (byPos.has(5) && byPos.has(2)) {
         const info = insert.run(
           byPos.get(5)._id_mission,
@@ -87,7 +79,6 @@ try {
         );
         inserted += info.changes || 0;
       }
-      // 6 depends on 4 and 5 (if exist) to add a slightly longer chain
       if (byPos.has(6) && byPos.has(4)) {
         const info = insert.run(
           byPos.get(6)._id_mission,
@@ -117,6 +108,6 @@ try {
   }
   exit(0);
 } catch (e) {
-  console.error("Seed mission dependencies failed:", e.message);
+  console.error("Seed mission_dependencies failed:", e.message);
   exit(1);
 }
