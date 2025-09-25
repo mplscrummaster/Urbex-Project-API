@@ -13,56 +13,108 @@ if (!fs.existsSync(DB_PATH)) {
 }
 
 try {
-  const missions = db
+  const scenarios = db
     .prepare(
-      `SELECT _id_mission, _id_scenario, position_mission FROM missions ORDER BY position_mission`
+      `SELECT _id_scenario, title_scenario FROM scenarios ORDER BY _id_scenario`
     )
     .all();
-  if (missions.length < 3) {
-    console.log(
-      "Not enough missions to seed dependencies (need >=3). Skipping."
-    );
+  if (scenarios.length === 0) {
+    console.log("No scenarios found; seed scenarios/missions first. Skipping.");
     exit(0);
   }
 
-  const existing = db
-    .prepare(`SELECT COUNT(*) as c FROM mission_dependencies`)
-    .get().c;
-  if (existing > 0) {
-    console.log(
-      `Mission dependencies already present (${existing}), skipping.`
-    );
-    exit(0);
-  }
-
-  // Simple demo chain: mission 3 depends on 1 and 2; mission 5 depends on 3
-  const m1 = missions.find((m) => m.position_mission === 1);
-  const m2 = missions.find((m) => m.position_mission === 2);
-  const m3 = missions.find((m) => m.position_mission === 3);
-  const m5 = missions.find((m) => m.position_mission === 5);
-
-  const rows = [];
-  if (m1 && m2 && m3) {
-    rows.push([m3._id_mission, m1._id_mission]);
-    rows.push([m3._id_mission, m2._id_mission]);
-  }
-  if (m3 && m5) {
-    rows.push([m5._id_mission, m3._id_mission]);
-  }
-
-  if (!rows.length) {
-    console.log("No dependency pattern matched, skipping.");
-    exit(0);
-  }
-
-  const insert = db.prepare(
-    `INSERT INTO mission_dependencies(_id_mission,_id_mission_required) VALUES (?,?)`
+  const getMissions = db.prepare(
+    `SELECT _id_mission, position_mission FROM missions WHERE _id_scenario=? ORDER BY position_mission`
   );
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO mission_dependencies(_id_mission,_id_mission_required) VALUES (?,?)`
+  );
+
+  let inserted = 0;
   const tx = db.transaction(() => {
-    for (const [mid, req] of rows) insert.run(mid, req);
+    for (const sc of scenarios) {
+      const ms = getMissions.all(sc._id_scenario);
+      if (ms.length < 3) continue;
+      // Map by position for convenience
+      const byPos = new Map(ms.map((m) => [m.position_mission, m]));
+
+      // Examples per scenario (idempotent via OR IGNORE):
+      // 3 depends on 2
+      if (byPos.has(3) && byPos.has(2)) {
+        const info = insert.run(
+          byPos.get(3)._id_mission,
+          byPos.get(2)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 3 also depends on 1 (if exists) to showcase multiple prerequisites
+      if (byPos.has(3) && byPos.has(1)) {
+        const info = insert.run(
+          byPos.get(3)._id_mission,
+          byPos.get(1)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 4 depends on 2 (if exists)
+      if (byPos.has(4) && byPos.has(2)) {
+        const info = insert.run(
+          byPos.get(4)._id_mission,
+          byPos.get(2)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 4 also depends on 3 (if exists)
+      if (byPos.has(4) && byPos.has(3)) {
+        const info = insert.run(
+          byPos.get(4)._id_mission,
+          byPos.get(3)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 5 depends on 3 (if exists)
+      if (byPos.has(5) && byPos.has(3)) {
+        const info = insert.run(
+          byPos.get(5)._id_mission,
+          byPos.get(3)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 5 also depends on 2 (if exists)
+      if (byPos.has(5) && byPos.has(2)) {
+        const info = insert.run(
+          byPos.get(5)._id_mission,
+          byPos.get(2)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      // 6 depends on 4 and 5 (if exist) to add a slightly longer chain
+      if (byPos.has(6) && byPos.has(4)) {
+        const info = insert.run(
+          byPos.get(6)._id_mission,
+          byPos.get(4)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+      if (byPos.has(6) && byPos.has(5)) {
+        const info = insert.run(
+          byPos.get(6)._id_mission,
+          byPos.get(5)._id_mission
+        );
+        inserted += info.changes || 0;
+      }
+    }
   });
+
   tx();
-  console.log(`Inserted ${rows.length} mission dependency links.`);
+  if (inserted === 0) {
+    console.log(
+      "No new mission dependency links inserted (possibly already present)."
+    );
+  } else {
+    console.log(
+      `Inserted ${inserted} mission dependency links across scenarios.`
+    );
+  }
   exit(0);
 } catch (e) {
   console.error("Seed mission dependencies failed:", e.message);
