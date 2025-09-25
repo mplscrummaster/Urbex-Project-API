@@ -4,74 +4,92 @@ import requireAuth from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Helpers
-function getScenarioProgress(userId, scenarioId) {
+// Bookmark a scenario
+router.post("/scenarios/:id/bookmark", requireAuth, (req, res) => {
+  const userId = req.auth.sub;
+  const scenarioId = Number(req.params.id);
   const scenario = db
-    .prepare(
-      `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
-    )
+    .prepare(`SELECT 1 FROM scenarios WHERE _id_scenario = ?`)
     .get(scenarioId);
-  if (!scenario) return null;
-  const progress = db
+  if (!scenario) return res.status(404).json({ error: "Scenario not found" });
+  const now = new Date().toISOString();
+  const existing = db
     .prepare(
       `SELECT * FROM scenario_progress WHERE _id_user = ? AND _id_scenario = ?`
     )
     .get(userId, scenarioId);
-  const missions = db
-    .prepare(
-      `SELECT _id_mission, title_mission AS title, position_mission AS position FROM missions WHERE _id_scenario = ? ORDER BY position_mission`
-    )
-    .all(scenarioId);
-  const completedMissionRows = db
-    .prepare(
-      `SELECT _id_mission FROM mission_progress WHERE _id_user = ? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario = ? )`
-    )
-    .all(userId, scenarioId);
-  const completedMissionIds = new Set(
-    completedMissionRows.map((r) => r._id_mission)
-  );
+  if (!existing) {
+    db.prepare(
+      `INSERT INTO scenario_progress(_id_user,_id_scenario,status,bookmarked,last_interaction_at) VALUES (?,?,?,?,?)`
+    ).run(userId, scenarioId, "not_started", 1, now);
+  } else if (!existing.bookmarked) {
+    db.prepare(
+      `UPDATE scenario_progress SET bookmarked=1,last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
+    ).run(now, userId, scenarioId);
+  }
+  {
+    const scenarioFull = db
+      .prepare(
+        `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(scenarioId);
+    const progress = db
+      .prepare(
+        `SELECT * FROM scenario_progress WHERE _id_user = ? AND _id_scenario = ?`
+      )
+      .get(userId, scenarioId);
+    const missions = db
+      .prepare(
+        `SELECT _id_mission, title_mission AS title, position_mission AS position FROM missions WHERE _id_scenario = ? ORDER BY position_mission`
+      )
+      .all(scenarioId);
+    const completedMissionRows = db
+      .prepare(
+        `SELECT _id_mission FROM mission_progress WHERE _id_user = ? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario = ? )`
+      )
+      .all(userId, scenarioId);
+    const completedMissionIds = new Set(
+      completedMissionRows.map((r) => r._id_mission)
+    );
+    const depsRows = db
+      .prepare(
+        `SELECT md._id_mission, md._id_mission_required FROM mission_dependencies md JOIN missions m ON m._id_mission = md._id_mission WHERE m._id_scenario = ?`
+      )
+      .all(scenarioId);
+    const depsMap = depsRows.reduce((acc, r) => {
+      (acc[r._id_mission] ||= []).push(r._id_mission_required);
+      return acc;
+    }, {});
+    const missionsWithState = missions.map((m) => {
+      const required = depsMap[m._id_mission] || [];
+      const locked = required.some((req) => !completedMissionIds.has(req));
+      return {
+        ...m,
+        completed: completedMissionIds.has(m._id_mission),
+        locked,
+        prerequisites: required,
+      };
+    });
+    return res.json({
+      scenario: {
+        id: scenarioFull._id_scenario,
+        title: scenarioFull.title_scenario,
+        is_published: scenarioFull.is_published,
+      },
+      progress: progress
+        ? {
+            status: progress.status,
+            bookmarked: !!progress.bookmarked,
+            started_at: progress.started_at,
+            completed_at: progress.completed_at,
+          }
+        : { status: "not_started", bookmarked: false },
+      missions: missionsWithState,
+    });
+  }
+});
 
-  // prerequisites
-  const depsRows = db
-    .prepare(
-      `SELECT md._id_mission, md._id_mission_required FROM mission_dependencies md JOIN missions m ON m._id_mission = md._id_mission WHERE m._id_scenario = ?`
-    )
-    .all(scenarioId);
-  const depsMap = depsRows.reduce((acc, r) => {
-    (acc[r._id_mission] ||= []).push(r._id_mission_required);
-    return acc;
-  }, {});
-
-  const missionsWithState = missions.map((m) => {
-    const required = depsMap[m._id_mission] || [];
-    const locked = required.some((req) => !completedMissionIds.has(req));
-    return {
-      ...m,
-      completed: completedMissionIds.has(m._id_mission),
-      locked,
-      prerequisites: required,
-    };
-  });
-
-  return {
-    scenario: {
-      id: scenario._id_scenario,
-      title: scenario.title_scenario,
-      is_published: scenario.is_published,
-    },
-    progress: progress
-      ? {
-          status: progress.status,
-          bookmarked: !!progress.bookmarked,
-          started_at: progress.started_at,
-          completed_at: progress.completed_at,
-        }
-      : { status: "not_started", bookmarked: false },
-    missions: missionsWithState,
-  };
-}
-
-// Start (or bookmark) a scenario
+// Start a scenario
 router.post("/scenarios/:id/start", requireAuth, (req, res) => {
   const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
@@ -102,36 +120,156 @@ router.post("/scenarios/:id/start", requireAuth, (req, res) => {
       ).run(now, userId, scenarioId);
     }
   }
-  return res.json(getScenarioProgress(userId, scenarioId));
+  {
+    const scenarioFull = db
+      .prepare(
+        `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(scenarioId);
+    const progress = db
+      .prepare(
+        `SELECT * FROM scenario_progress WHERE _id_user = ? AND _id_scenario = ?`
+      )
+      .get(userId, scenarioId);
+    const missions = db
+      .prepare(
+        `SELECT _id_mission, title_mission AS title, position_mission AS position FROM missions WHERE _id_scenario = ? ORDER BY position_mission`
+      )
+      .all(scenarioId);
+    const completedMissionRows = db
+      .prepare(
+        `SELECT _id_mission FROM mission_progress WHERE _id_user = ? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario = ? )`
+      )
+      .all(userId, scenarioId);
+    const completedMissionIds = new Set(
+      completedMissionRows.map((r) => r._id_mission)
+    );
+    const depsRows = db
+      .prepare(
+        `SELECT md._id_mission, md._id_mission_required FROM mission_dependencies md JOIN missions m ON m._id_mission = md._id_mission WHERE m._id_scenario = ?`
+      )
+      .all(scenarioId);
+    const depsMap = depsRows.reduce((acc, r) => {
+      (acc[r._id_mission] ||= []).push(r._id_mission_required);
+      return acc;
+    }, {});
+    const missionsWithState = missions.map((m) => {
+      const required = depsMap[m._id_mission] || [];
+      const locked = required.some((req) => !completedMissionIds.has(req));
+      return {
+        ...m,
+        completed: completedMissionIds.has(m._id_mission),
+        locked,
+        prerequisites: required,
+      };
+    });
+    return res.json({
+      scenario: {
+        id: scenarioFull._id_scenario,
+        title: scenarioFull.title_scenario,
+        is_published: scenarioFull.is_published,
+      },
+      progress: progress
+        ? {
+            status: progress.status,
+            bookmarked: !!progress.bookmarked,
+            started_at: progress.started_at,
+            completed_at: progress.completed_at,
+          }
+        : { status: "not_started", bookmarked: false },
+      missions: missionsWithState,
+    });
+  }
 });
 
-// Explicit bookmark without starting (status stays not_started)
-router.post("/scenarios/:id/bookmark", requireAuth, (req, res) => {
+// READ scenario progress detail
+router.get("/scenarios/:id/progress", requireAuth, (req, res) => {
   const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
-  const scenario = db
-    .prepare(`SELECT 1 FROM scenarios WHERE _id_scenario = ?`)
+  const scenarioFull = db
+    .prepare(
+      `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
+    )
     .get(scenarioId);
-  if (!scenario) return res.status(404).json({ error: "Scenario not found" });
-  const now = new Date().toISOString();
-  const existing = db
+  if (!scenarioFull)
+    return res.status(404).json({ error: "Scenario not found" });
+  const progress = db
     .prepare(
       `SELECT * FROM scenario_progress WHERE _id_user = ? AND _id_scenario = ?`
     )
     .get(userId, scenarioId);
-  if (!existing) {
-    db.prepare(
-      `INSERT INTO scenario_progress(_id_user,_id_scenario,status,bookmarked,last_interaction_at) VALUES (?,?,?,?,?)`
-    ).run(userId, scenarioId, "not_started", 1, now);
-  } else if (!existing.bookmarked) {
-    db.prepare(
-      `UPDATE scenario_progress SET bookmarked=1,last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
-    ).run(now, userId, scenarioId);
-  }
-  return res.json(getScenarioProgress(userId, scenarioId));
+  const missions = db
+    .prepare(
+      `SELECT _id_mission, title_mission AS title, position_mission AS position FROM missions WHERE _id_scenario = ? ORDER BY position_mission`
+    )
+    .all(scenarioId);
+  const completedMissionRows = db
+    .prepare(
+      `SELECT _id_mission FROM mission_progress WHERE _id_user = ? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario = ? )`
+    )
+    .all(userId, scenarioId);
+  const completedMissionIds = new Set(
+    completedMissionRows.map((r) => r._id_mission)
+  );
+  const depsRows = db
+    .prepare(
+      `SELECT md._id_mission, md._id_mission_required FROM mission_dependencies md JOIN missions m ON m._id_mission = md._id_mission WHERE m._id_scenario = ?`
+    )
+    .all(scenarioId);
+  const depsMap = depsRows.reduce((acc, r) => {
+    (acc[r._id_mission] ||= []).push(r._id_mission_required);
+    return acc;
+  }, {});
+  const missionsWithState = missions.map((m) => {
+    const required = depsMap[m._id_mission] || [];
+    const locked = required.some((req) => !completedMissionIds.has(req));
+    return {
+      ...m,
+      completed: completedMissionIds.has(m._id_mission),
+      locked,
+      prerequisites: required,
+    };
+  });
+  return res.json({
+    scenario: {
+      id: scenarioFull._id_scenario,
+      title: scenarioFull.title_scenario,
+      is_published: scenarioFull.is_published,
+    },
+    progress: progress
+      ? {
+          status: progress.status,
+          bookmarked: !!progress.bookmarked,
+          started_at: progress.started_at,
+          completed_at: progress.completed_at,
+        }
+      : { status: "not_started", bookmarked: false },
+    missions: missionsWithState,
+  });
 });
 
-// Remove bookmark: delete progress & related mission progress to fully reset
+// READ scenarios progress
+router.get("/me/scenarios", requireAuth, (req, res) => {
+  const userId = req.auth.sub;
+  const rows = db
+    .prepare(
+      `SELECT 
+         s._id_scenario AS id,
+         s.title_scenario AS title,
+         COALESCE(sp.status,'not_started') as status,
+         COALESCE(sp.bookmarked,0) as bookmarked,
+         sp.started_at,
+         sp.completed_at
+       FROM scenarios s
+       LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
+       WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
+       ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title_scenario`
+    )
+    .all(userId);
+  return res.json(rows);
+});
+
+// Remove bookmark : delete progress & related mission progress to fully reset
 router.delete("/scenarios/:id/bookmark", requireAuth, (req, res) => {
   const userId = req.auth.sub;
   const scenarioId = Number(req.params.id);
@@ -219,35 +357,67 @@ router.post("/missions/:id/complete", requireAuth, (req, res) => {
     ).run(now, userId, mission._id_scenario);
   }
 
-  return res.json(getScenarioProgress(userId, mission._id_scenario));
-});
-
-// Get scenario progress detail
-router.get("/scenarios/:id/progress", requireAuth, (req, res) => {
-  const data = getScenarioProgress(req.auth.sub, Number(req.params.id));
-  if (!data) return res.status(404).json({ error: "Scenario not found" });
-  return res.json(data);
-});
-
-// List my scenarios with progress (bookmarks first)
-router.get("/me/scenarios", requireAuth, (req, res) => {
-  const userId = req.auth.sub;
-  const rows = db
-    .prepare(
-      `SELECT 
-         s._id_scenario AS id,
-         s.title_scenario AS title,
-         COALESCE(sp.status,'not_started') as status,
-         COALESCE(sp.bookmarked,0) as bookmarked,
-         sp.started_at,
-         sp.completed_at
-       FROM scenarios s
-       LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
-       WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
-       ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title_scenario`
-    )
-    .all(userId);
-  return res.json(rows);
+  {
+    const scenarioId = mission._id_scenario;
+    const scenarioFull = db
+      .prepare(
+        `SELECT _id_scenario, title_scenario, is_published FROM scenarios WHERE _id_scenario = ?`
+      )
+      .get(scenarioId);
+    const progress = db
+      .prepare(
+        `SELECT * FROM scenario_progress WHERE _id_user = ? AND _id_scenario = ?`
+      )
+      .get(userId, scenarioId);
+    const missions = db
+      .prepare(
+        `SELECT _id_mission, title_mission AS title, position_mission AS position FROM missions WHERE _id_scenario = ? ORDER BY position_mission`
+      )
+      .all(scenarioId);
+    const completedMissionRows = db
+      .prepare(
+        `SELECT _id_mission FROM mission_progress WHERE _id_user = ? AND _id_mission IN (SELECT _id_mission FROM missions WHERE _id_scenario = ? )`
+      )
+      .all(userId, scenarioId);
+    const completedMissionIds = new Set(
+      completedMissionRows.map((r) => r._id_mission)
+    );
+    const depsRows = db
+      .prepare(
+        `SELECT md._id_mission, md._id_mission_required FROM mission_dependencies md JOIN missions m ON m._id_mission = md._id_mission WHERE m._id_scenario = ?`
+      )
+      .all(scenarioId);
+    const depsMap = depsRows.reduce((acc, r) => {
+      (acc[r._id_mission] ||= []).push(r._id_mission_required);
+      return acc;
+    }, {});
+    const missionsWithState = missions.map((m) => {
+      const required = depsMap[m._id_mission] || [];
+      const locked = required.some((req) => !completedMissionIds.has(req));
+      return {
+        ...m,
+        completed: completedMissionIds.has(m._id_mission),
+        locked,
+        prerequisites: required,
+      };
+    });
+    return res.json({
+      scenario: {
+        id: scenarioFull._id_scenario,
+        title: scenarioFull.title_scenario,
+        is_published: scenarioFull.is_published,
+      },
+      progress: progress
+        ? {
+            status: progress.status,
+            bookmarked: !!progress.bookmarked,
+            started_at: progress.started_at,
+            completed_at: progress.completed_at,
+          }
+        : { status: "not_started", bookmarked: false },
+      missions: missionsWithState,
+    });
+  }
 });
 
 export default router;

@@ -13,121 +13,110 @@ if (!fs.existsSync(DB_PATH)) {
 }
 
 try {
-  const row = db.prepare("SELECT COUNT(*) AS c FROM blocks").get();
-  const count = row?.c ?? 0;
-  if (count > 0) {
-    console.log(`Blocks already present (${count}), skipping.`);
-    exit(0);
-  }
+  const insertStmt = db.prepare(
+    `INSERT INTO blocks (owner_type, _id_scenario, _id_mission, position_block, type_block, content_text, url_media, caption)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const insert = (...args) => insertStmt.run(...args);
 
-  const scenario = db
-    .prepare("SELECT _id_scenario FROM scenarios ORDER BY _id_scenario LIMIT 1")
-    .get();
-  if (!scenario) {
+  const scenarios = db
+    .prepare(
+      `SELECT _id_scenario, title_scenario FROM scenarios ORDER BY _id_scenario`
+    )
+    .all();
+  if (scenarios.length === 0) {
     console.error("No scenario found; seed scenarios first.");
     exit(1);
   }
 
-  const missions = db
-    .prepare(
-      "SELECT _id_mission FROM missions WHERE _id_scenario = ? ORDER BY position_mission"
-    )
-    .all(scenario._id_scenario);
-  if (missions.length === 0) {
-    console.error("No missions found; seed missions first.");
-    exit(1);
+  // Text generators
+  const introText = (title) =>
+    `Bienvenue dans « ${title} ». Avancez prudemment : chaque détail compte, chaque trace raconte une histoire. Laissez vos sens guider les premiers pas.`;
+  const outroText = (title) =>
+    `Fin de « ${title} ». Vous avez percé une part du mystère : emportez ce que vous avez découvert, il vous servira ailleurs.`;
+  const missionText = (scTitle, mTitle, index) =>
+    `Mission ${index}. « ${mTitle} ». Dans le cadre de « ${scTitle} », observez le lieu, écoutez ses échos. Une marque discrète, un alignement suspect, un mot qui revient : trouvez-le.`;
+
+  let created = 0;
+
+  db.transaction(() => {
+    for (const sc of scenarios) {
+      // Scenario intro (ensure minimum one text block)
+      const hasIntro = db
+        .prepare(
+          `SELECT 1 FROM blocks WHERE owner_type='scenario_intro' AND _id_scenario=? LIMIT 1`
+        )
+        .get(sc._id_scenario);
+      if (!hasIntro) {
+        insert(
+          "scenario_intro",
+          sc._id_scenario,
+          null,
+          1,
+          "text",
+          introText(sc.title_scenario),
+          null,
+          null
+        );
+        created++;
+      }
+
+      // Scenario outro (ensure minimum one text block)
+      const hasOutro = db
+        .prepare(
+          `SELECT 1 FROM blocks WHERE owner_type='scenario_outro' AND _id_scenario=? LIMIT 1`
+        )
+        .get(sc._id_scenario);
+      if (!hasOutro) {
+        insert(
+          "scenario_outro",
+          sc._id_scenario,
+          null,
+          1,
+          "text",
+          outroText(sc.title_scenario),
+          null,
+          null
+        );
+        created++;
+      }
+
+      // Mission blocks (ensure minimum one text block per mission)
+      const missions = db
+        .prepare(
+          `SELECT _id_mission, title_mission, position_mission FROM missions WHERE _id_scenario=? ORDER BY position_mission`
+        )
+        .all(sc._id_scenario);
+      for (const m of missions) {
+        const hasMissionBlock = db
+          .prepare(
+            `SELECT 1 FROM blocks WHERE owner_type='mission' AND _id_mission=? LIMIT 1`
+          )
+          .get(m._id_mission);
+        if (!hasMissionBlock) {
+          insert(
+            "mission",
+            null,
+            m._id_mission,
+            1,
+            "text",
+            missionText(sc.title_scenario, m.title_mission, m.position_mission),
+            null,
+            null
+          );
+          created++;
+        }
+      }
+    }
+  })();
+
+  if (created === 0) {
+    console.log(
+      "No new blocks inserted (all scenarios and missions already have minimum text blocks)."
+    );
+  } else {
+    console.log(`Inserted ${created} text blocks (intros/outros/missions).`);
   }
-
-  const stmt =
-    db.prepare(`INSERT INTO blocks (owner_type, _id_scenario, _id_mission, position_block, type_block, content_text, url_media, caption)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  const insertMany = db.transaction((rows) => {
-    for (const r of rows) stmt.run(...r);
-  });
-
-  const intro = [
-    [
-      "scenario_intro",
-      scenario._id_scenario,
-      null,
-      1,
-      "text",
-      "Bienvenue dans les ruines oubliées.",
-      null,
-      null,
-    ],
-    [
-      "scenario_intro",
-      scenario._id_scenario,
-      null,
-      2,
-      "image",
-      null,
-      "https://example.com/intro1.jpg",
-      "Entrée du site",
-    ],
-    [
-      "scenario_intro",
-      scenario._id_scenario,
-      null,
-      3,
-      "audio",
-      null,
-      "https://example.com/ambiance.mp3",
-      "Ambiance",
-    ],
-  ];
-
-  const missionBlocks = missions.flatMap((m, i) => [
-    [
-      "mission",
-      null,
-      m._id_mission,
-      1,
-      "text",
-      `Indice de la mission ${i + 1}.`,
-      null,
-      null,
-    ],
-    [
-      "mission",
-      null,
-      m._id_mission,
-      2,
-      "image",
-      null,
-      `https://example.com/m${i + 1}.jpg`,
-      `Photo ${i + 1}`,
-    ],
-  ]);
-
-  const outro = [
-    [
-      "scenario_outro",
-      scenario._id_scenario,
-      null,
-      1,
-      "text",
-      "Bravo, vous avez terminé la quête !",
-      null,
-      null,
-    ],
-    [
-      "scenario_outro",
-      scenario._id_scenario,
-      null,
-      2,
-      "video",
-      null,
-      "https://example.com/outro.mp4",
-      "Récapitulatif",
-    ],
-  ];
-
-  insertMany([...intro, ...missionBlocks, ...outro]);
-  console.log(
-    `Inserted ${intro.length + missionBlocks.length + outro.length} blocks.`
-  );
   exit(0);
 } catch (e) {
   console.error("Seed blocks failed:", e.message);

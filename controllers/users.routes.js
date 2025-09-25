@@ -98,7 +98,7 @@ router.post(`/register`, (req, res) => {
   }
 });
 
-// READ all users (admin-only)
+// READ all users (admin)
 router.get("/users", requireAuth, (req, res) => {
   if (!isAdmin(req.auth?.sub))
     return res.status(403).json({ error: "forbidden" });
@@ -154,7 +154,7 @@ router.get("/me", requireAuth, (req, res) => {
   }
 });
 
-// UPDATE user role
+// UPDATE user role (admin)
 router.put("/users/:id/role", requireAuth, (req, res) => {
   if (!isAdmin(req.auth?.sub))
     return res.status(403).json({ error: "forbidden" });

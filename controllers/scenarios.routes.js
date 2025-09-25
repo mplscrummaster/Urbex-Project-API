@@ -96,6 +96,16 @@ router.get("/scenarios/:id/full", (req, res) => {
       )
       .all(id);
 
+    // Communes assigned to this scenario
+    const communes = db
+      .prepare(
+        `SELECT c._id_commune AS id, c.name_fr, c.name_nl, c.name_de, c.geo_point_lat AS lat, c.geo_point_lon AS lon, c.postal_codes
+         FROM scenario_communes sc
+         JOIN communes c ON c._id_commune = sc._id_commune
+         WHERE sc._id_scenario = ? ORDER BY c.name_fr ASC`
+      )
+      .all(id);
+
     // Missions for scenario (ordered)
     const missions = db
       .prepare(
@@ -106,7 +116,13 @@ router.get("/scenarios/:id/full", (req, res) => {
 
     // If no missions, return without mission blocks
     if (missions.length === 0) {
-      return res.json({ scenario, introBlocks, missions: [], outroBlocks });
+      return res.json({
+        scenario,
+        communes,
+        introBlocks,
+        missions: [],
+        outroBlocks,
+      });
     }
 
     // Fetch all mission blocks in one query and group by mission id
@@ -175,6 +191,7 @@ router.get("/scenarios/:id/full", (req, res) => {
 
     res.json({
       scenario,
+      communes,
       introBlocks,
       missions: missionsWithBlocks,
       outroBlocks,
@@ -232,7 +249,7 @@ router.put("/scenarios/:id", requireAuth, (req, res) => {
   }
 });
 
-// DELETE scenario (cascades to missions and blocks)
+// DELETE scenario
 router.delete("/scenarios/:id", requireAuth, (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(id) || id <= 0)

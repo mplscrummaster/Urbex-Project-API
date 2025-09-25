@@ -14,11 +14,7 @@ if (!fs.existsSync(DB_PATH)) {
 
 try {
   const row = db.prepare("SELECT COUNT(*) AS c FROM missions").get();
-  const count = row?.c ?? 0;
-  if (count > 0) {
-    console.log(`Missions already present (${count}), skipping.`);
-    exit(0);
-  }
+  const totalBefore = row?.c ?? 0;
 
   const scenarios = db
     .prepare(
@@ -30,62 +26,103 @@ try {
     exit(1);
   }
 
-  const scenarioId = scenarios[0]._id_scenario; // "Les ruines oubliées"
+  // Title pool and riddle/answer pool
+  const titlePool = [
+    "Le réfectoire des moines",
+    "Le jardin de l'abbé",
+    "La salle de contrôle",
+    "Les catacombes",
+    "Le donjon",
+    "La chapelle souterraine",
+    "Le hangar abandonné",
+    "L'ancienne cimenterie",
+    "La vieille gare",
+  ];
 
-  const data = [
+  const riddlePool = [
     {
-      _id_scenario: scenarioId,
-      position_mission: 1,
-      title_mission: "Le réfectoire des moines",
-      latitude: 50.8503,
-      longitude: 4.3517,
-      riddle_text: "Sous la table des murmures, cherche le mot gravé.",
-      answer_word: "silence",
+      r: "Sous la pierre fissurée, un seul mot demeure.",
+      a: "serment",
     },
     {
-      _id_scenario: scenarioId,
-      position_mission: 2,
-      title_mission: "Le jardin de l'abbé",
-      latitude: 50.8511,
-      longitude: 4.3522,
-      riddle_text:
-        "Comptez les pas jusqu'à l'arbre tordu, notez la lettre cachée.",
-      answer_word: "ombre",
+      r: "Alignez les points cardinaux depuis l'ombre du pylône.",
+      a: "nord",
     },
     {
-      _id_scenario: scenarioId,
-      position_mission: 3,
-      title_mission: "Les catacombes",
-      latitude: 50.852,
-      longitude: 4.353,
-      riddle_text: "Parmi les noms effacés, la clé se répète trois fois.",
-      answer_word: "clave",
+      r: "Comptes les fenêtres brisées, garde la couleur dominante.",
+      a: "bleu",
     },
     {
-      _id_scenario: scenarioId,
-      position_mission: 4,
-      title_mission: "Le donjon",
-      latitude: 50.8528,
-      longitude: 4.354,
-      riddle_text: "Du haut de la tour, alignez les points cardinaux.",
-      answer_word: "nord",
+      r: "Les initiales gravées forment ce mot.",
+      a: "clef",
     },
     {
-      _id_scenario: scenarioId,
-      position_mission: 5,
-      title_mission: "La chapelle souterraine",
-      latitude: 50.8531,
-      longitude: 4.3549,
-      riddle_text: "Sous la pierre fissurée, le mot se dévoile.",
-      answer_word: "serment",
+      r: "Sous la poussière, écoute ce qui revient toujours.",
+      a: "echo",
+    },
+    {
+      r: "Au centre du cadran, l'heure éternelle.",
+      a: "minuit",
+    },
+    {
+      r: "Trois croix alignées indiquent le mot à trouver.",
+      a: "croix",
+    },
+    {
+      r: "Derrière la grille, la couleur du portail donne la réponse.",
+      a: "rouge",
+    },
+    {
+      r: "Sous la table des murmures, cherche le mot gravé.",
+      a: "silence",
+    },
+    {
+      r: "Au pied de la statue, une seule direction.",
+      a: "est",
     },
   ];
+
+  function pickTitles(offset, n) {
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+      arr.push(titlePool[(offset + i) % titlePool.length]);
+    }
+    return arr;
+  }
+
+  function pickRiddle(i) {
+    return riddlePool[i % riddlePool.length];
+  }
+
+  // Belgium-ish bounding box (rough): lat 49.5–51.6, lon 2.5–6.5
+  function randomBetween(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+  function seededBetween(seed, min, max) {
+    // simple LCG based on seed
+    let x = (Math.sin(seed) * 10000) % 1;
+    if (x < 0) x = -x;
+    return x * (max - min) + min;
+  }
+
+  function clusterForScenario(scnId) {
+    const latCenter = seededBetween(scnId * 1.7, 49.8, 51.2);
+    const lonCenter = seededBetween(scnId * 2.3, 3.0, 5.8);
+    return { latCenter, lonCenter };
+  }
+  function jitter(seed, maxDelta) {
+    // returns value in [-maxDelta, +maxDelta]
+    let x = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
+    if (x < 0) x = -x;
+    return (x - 0.5) * 2 * maxDelta;
+  }
 
   const stmt = db.prepare(
     `INSERT INTO missions (_id_scenario, position_mission, title_mission, latitude, longitude, riddle_text, answer_word)
      VALUES (?, ?, ?, ?, ?, ?, ?)`
   );
 
+  let inserted = 0;
   const insertMany = db.transaction((rows) => {
     for (const m of rows) {
       stmt.run(
@@ -97,11 +134,49 @@ try {
         m.riddle_text,
         m.answer_word
       );
+      inserted++;
     }
   });
 
-  insertMany(data);
-  console.log(`Inserted ${data.length} missions.`);
+  for (let idx = 0; idx < scenarios.length; idx++) {
+    const scn = scenarios[idx];
+    const counts = db
+      .prepare(
+        "SELECT COUNT(*) AS c, COALESCE(MAX(position_mission),0) AS maxpos FROM missions WHERE _id_scenario = ?"
+      )
+      .get(scn._id_scenario);
+    const have = counts.c || 0;
+    const nextPos = counts.maxpos + 1;
+    const desired = 3 + (scn._id_scenario % 5); // deterministic 3..7 per scenario
+    if (have >= desired) continue;
+
+    const need = desired - have;
+    const titles = pickTitles(idx, need);
+    const { latCenter, lonCenter } = clusterForScenario(scn._id_scenario);
+    const rows = [];
+    for (let i = 0; i < need; i++) {
+      const { r, a } = pickRiddle(i + have);
+      const lat = latCenter + jitter((i + 1) * scn._id_scenario, 0.02);
+      const lon = lonCenter + jitter((i + 3) * scn._id_scenario, 0.03);
+      rows.push({
+        _id_scenario: scn._id_scenario,
+        position_mission: nextPos + i,
+        title_mission: titles[i],
+        latitude: Number(lat.toFixed(6)),
+        longitude: Number(lon.toFixed(6)),
+        riddle_text: r,
+        answer_word: a,
+      });
+    }
+    insertMany(rows);
+  }
+
+  const totalAfter = db.prepare("SELECT COUNT(*) AS c FROM missions").get().c;
+  console.log(
+    inserted === 0
+      ? `No new missions inserted (already had ${totalBefore}).`
+      : `Inserted ${inserted} missions (now total ${totalAfter}).`
+  );
   exit(0);
 } catch (e) {
   console.error("Seed missions failed:", e.message);
