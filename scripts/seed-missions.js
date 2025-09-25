@@ -49,7 +49,7 @@ try {
       a: "nord",
     },
     {
-      r: "Comptes les fenêtres brisées, garde la couleur dominante.",
+      r: "Compte les fenêtres brisées, garde la couleur dominante.",
       a: "bleu",
     },
     {
