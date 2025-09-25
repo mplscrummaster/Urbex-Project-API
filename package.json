@@ -1,14 +1,31 @@
 {
-  "name": "urbex-api-MPL",
+  "name": "urbex-api-mpl",
   "version": "1.0.0",
-  "main": "src/Launch.js",
+  "main": "launch.js",
   "type": "module",
   "scripts": {
-    "start": "node Launch.js"
+    "start": "node launch.js",
+    "db:seed:scenarios": "node scripts/seed-scenarios.js",
+    "db:seed:missions": "node scripts/seed-missions.js",
+    "db:seed:mission_dependencies": "node scripts/seed-mission_dependencies.js",
+    "db:seed:blocks": "node scripts/seed-blocks.js",
+    "db:seed:communes": "node scripts/seed-communes.js",
+    "db:seed:scenario_communes": "node scripts/seed-scenario_communes.js",
+    "db:seed:users": "node scripts/seed-users_players_progress.js",
+    "db:seed": "npm run db:seed:scenarios && npm run db:seed:missions && npm run db:seed:mission_dependencies && npm run db:seed:blocks && npm run db:seed:communes && npm run db:seed:scenario_communes && npm run db:seed:users",
+    "seed": "npm run db:seed",
+    "db:reset": "node scripts/db-reset.js",
+    "db:reset:seed": "npm run db:reset && npm run db:seed",
+    "reset": "npm run db:reset",
+    "reset:seed": "npm run db:reset:seed"
   },
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "sqlite3": "^5.1.7"
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5",
+    "adm-zip": "^0.5.12"
   }
 }

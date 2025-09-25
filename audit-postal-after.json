@@ -1,0 +1,211 @@
+{
+  "apply": true,
+  "updated": 9,
+  "entries": [
+    {
+      "commune": "Ham-sur-Heure-Nalinnes",
+      "kept": [
+        "6120",
+        "6121",
+        "6122"
+      ],
+      "removed": [],
+      "reason": "all_same_prefix",
+      "original": [
+        "6120",
+        "6121",
+        "6122"
+      ]
+    },
+    {
+      "commune": "Liège",
+      "kept": [
+        "4000",
+        "4020"
+      ],
+      "removed": [],
+      "reason": "whitelist"
+    },
+    {
+      "commune": "Celles",
+      "kept": [
+        "4317"
+      ],
+      "removed": [
+        "5561",
+        "7760"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "4317",
+        "5561",
+        "7760"
+      ]
+    },
+    {
+      "commune": "Machelen",
+      "kept": [
+        "1830"
+      ],
+      "removed": [
+        "9870"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "1830",
+        "9870"
+      ]
+    },
+    {
+      "commune": "Forest",
+      "kept": [
+        "1190"
+      ],
+      "removed": [
+        "2430",
+        "7910"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "1190",
+        "2430",
+        "7910"
+      ]
+    },
+    {
+      "commune": "Saint-Léger",
+      "kept": [
+        "6747"
+      ],
+      "removed": [
+        "7730"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "6747",
+        "7730"
+      ]
+    },
+    {
+      "commune": "Hamme",
+      "kept": [
+        "1785"
+      ],
+      "removed": [
+        "9220"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "1785",
+        "9220"
+      ]
+    },
+    {
+      "commune": "Saint-Nicolas",
+      "kept": [
+        "4420",
+        "4421",
+        "4422"
+      ],
+      "removed": [],
+      "reason": "all_same_prefix",
+      "original": [
+        "4420",
+        "4421",
+        "4422"
+      ]
+    },
+    {
+      "commune": "Nieuwerkerken",
+      "kept": [
+        "3850"
+      ],
+      "removed": [
+        "9320"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "3850",
+        "9320"
+      ]
+    },
+    {
+      "commune": "Beveren",
+      "kept": [
+        "8791",
+        "8800"
+      ],
+      "removed": [],
+      "reason": "cluster_1_digit",
+      "original": [
+        "8791",
+        "8800"
+      ]
+    },
+    {
+      "commune": "Neufchâteau",
+      "kept": [
+        "4608"
+      ],
+      "removed": [
+        "6840"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "4608",
+        "6840"
+      ]
+    },
+    {
+      "commune": "Alost",
+      "kept": [
+        "3800",
+        "9300"
+      ],
+      "removed": [],
+      "reason": "whitelist"
+    },
+    {
+      "commune": "Hal",
+      "kept": [
+        "1500"
+      ],
+      "removed": [
+        "2980"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "1500",
+        "2980"
+      ]
+    },
+    {
+      "commune": "Tielt",
+      "kept": [
+        "3390"
+      ],
+      "removed": [
+        "8700"
+      ],
+      "reason": "prefix_filter",
+      "original": [
+        "3390",
+        "8700"
+      ]
+    },
+    {
+      "commune": "Anvers",
+      "kept": [
+        "2000",
+        "2018",
+        "2020",
+        "2030",
+        "2040",
+        "2050",
+        "2060"
+      ],
+      "removed": [],
+      "reason": "whitelist"
+    }
+  ]
+}
