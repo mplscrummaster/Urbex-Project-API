@@ -6,6 +6,7 @@ export const routes = [
   // health
   { method: "GET", path: "/health" },
   // auth & users
+  // users (admin-only list)
   { method: "GET", path: "/api/users" },
   { method: "GET", path: "/api/users/:id" },
   { method: "POST", path: "/api/login" },
@@ -57,8 +58,8 @@ export const routes = [
   { method: "GET", path: "/api/scenarios/:id/communes" },
   { method: "POST", path: "/api/scenarios/:id/communes" },
   // admin
-  { method: "GET", path: "/api/admin/users" },
-  { method: "PUT", path: "/api/admin/users/:id/role" },
+  // removed: /api/admin/users (now /api/users is admin-only)
+  { method: "PUT", path: "/api/users/:id/role" },
 ];
 
 router.get("/", (_req, res) => {
