@@ -10,7 +10,6 @@ const LINKS = [
   { title: "Les passages interdits", _id_commune: 639 }, // Momignies
   { title: "Le réseau invisible", _id_commune: 1153 }, // Sainte-Ode
   { title: "Sous la poussière du temps", _id_commune: 809 }, // Malines
-  { title: "Exploration Ancienne Usine", _id_commune: 802 }, // Namur
   { title: "La clé des profondeurs", _id_commune: 1029 }, // Yvoir
   { title: "La clé des profondeurs", _id_commune: 1042 }, // Ciney
   { title: "Mémoire des murs", _id_commune: 702 }, // Incourt
