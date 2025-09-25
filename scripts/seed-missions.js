@@ -95,9 +95,6 @@ try {
   };
 
   // Belgium-ish bounding box (rough): lat 49.5–51.6, lon 2.5–6.5
-  const randomBetween = (min, max) => {
-    return Math.random() * (max - min) + min;
-  };
   const seededBetween = (seed, min, max) => {
     // simple LCG based on seed
     let x = (Math.sin(seed) * 10000) % 1;
