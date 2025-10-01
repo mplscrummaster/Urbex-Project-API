@@ -433,7 +433,12 @@ router.post("/scenarios/:id/complete", requireAuth, (req, res) => {
     )
     .get(userId, scenarioId).c;
   if (totalMissions > 0 && completedCount !== totalMissions) {
-    return res.status(400).json({ error: "Toutes les missions doivent être complétées avant de terminer l'aventure" });
+    return res
+      .status(400)
+      .json({
+        error:
+          "Toutes les missions doivent être complétées avant de terminer l'aventure",
+      });
   }
   const progress = db
     .prepare(
