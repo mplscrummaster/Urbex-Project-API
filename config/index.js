@@ -19,5 +19,3 @@ if (NODE_ENV !== "development" && JWT_SECRET === "dev-secret") {
     "Insecure JWT_SECRET. Set a strong JWT_SECRET in the environment."
   );
 }
-
-// No default export to avoid duplicate namespace patterns elsewhere
