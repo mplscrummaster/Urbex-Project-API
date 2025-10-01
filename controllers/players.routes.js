@@ -4,13 +4,6 @@ import requireAuth from "../middleware/auth.js";
 
 const router = Router();
 
-const isAdmin = (userId) => {
-  const row = db
-    .prepare("SELECT role_user FROM users WHERE _id_user = ?")
-    .get(userId);
-  return row?.role_user === "admin";
-};
-
 // READ players
 router.get("/players", (req, res) => {
   try {
