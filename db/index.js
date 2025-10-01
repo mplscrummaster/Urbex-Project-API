@@ -1,8 +1,7 @@
 import Database from "better-sqlite3";
-import { DB_PATH, DB_VERBOSE } from "../config/index.js";
+import { DB_PATH } from "../config/index.js";
 
-const db = new Database(DB_PATH, {
-  verbose: DB_VERBOSE ? console.log : undefined,
-});
+// Simpler: no conditional verbose mode; add back if needed later
+const db = new Database(DB_PATH);
 
 export default db;
