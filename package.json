@@ -1,14 +1,20 @@
 {
-  "name": "urbex-api-MPL",
+  "name": "urbex-api-mpl",
   "version": "1.0.0",
-  "main": "src/Launch.js",
+  "main": "launch.js",
   "type": "module",
   "scripts": {
-    "start": "node Launch.js"
+    "start": "node launch.js",
+    "reset:seed": "node scripts/db-reset.js && node scripts/seed-scenarios.js && node scripts/seed-missions.js && node scripts/seed-mission_dependencies.js && node scripts/seed-blocks.js && node scripts/seed-communes.js && node scripts/seed-scenario_communes.js && node scripts/seed-users_players_progress.js",
+    "dev:seed": "node scripts/seed-scenarios.js && node scripts/seed-missions.js && node scripts/seed-mission_dependencies.js && node scripts/seed-blocks.js && node scripts/seed-communes.js && node scripts/seed-scenario_communes.js && node scripts/seed-users_players_progress.js",
+    "seed:all": "node scripts/seed-all.js --reset --publish --scores --media"
   },
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "sqlite3": "^5.1.7"
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5"
   }
 }
