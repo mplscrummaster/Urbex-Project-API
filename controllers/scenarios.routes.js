@@ -4,6 +4,45 @@ import requireAuth from "../middleware/auth.js";
 
 const router = Router();
 
+// Helper to build map pin dataset
+function fetchScenarioCommunePins(query) {
+  const { published } = query || {};
+  const clauses = [];
+  const params = [];
+  if (published === "1" || published === "true") {
+    clauses.push("s.is_published = 1");
+  }
+  const where = clauses.length ? "WHERE " + clauses.join(" AND ") : "";
+  const sql = `SELECT 
+      s._id_scenario AS scenario_id,
+      s.title_scenario AS title,
+      s.is_published AS is_published,
+      u.username_user AS author,
+      c._id_commune AS commune_id,
+      c.name_fr AS commune_name_fr,
+      c.name_nl AS commune_name_nl,
+      c.name_de AS commune_name_de,
+      c.geo_point_lat AS lat,
+      c.geo_point_lon AS lon
+    FROM scenario_communes sc
+    JOIN scenarios s ON s._id_scenario = sc._id_scenario
+    LEFT JOIN users u ON u._id_user = s.created_by
+    JOIN communes c ON c._id_commune = sc._id_commune
+    ${where}
+    ORDER BY s.title_scenario ASC, c.name_fr ASC`;
+  return db.prepare(sql).all(...params);
+}
+
+// Primary route (nested naming convention)
+router.get("/scenarios/communes", (req, res) => {
+  try {
+    const rows = fetchScenarioCommunePins(req.query);
+    res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // CREATE scenario
 router.post("/scenarios", requireAuth, (req, res) => {
   const body = req.body || {};

@@ -88,9 +88,17 @@ CREATE TABLE IF NOT EXISTS communes (
   name_de           TEXT,
   geo_point_lat     REAL,
   geo_point_lon     REAL,
-  geo_shape_geojson TEXT,
   postal_codes      TEXT                -- NULL for now; later will contain e.g. '1000,1005' or JSON '["1000","1005"]'
 );
+
+-- Optional separate table for heavy polygon geometry so main communes queries stay lightweight
+CREATE TABLE IF NOT EXISTS commune_shapes (
+  _id_commune       INTEGER PRIMARY KEY,
+  geo_shape_geojson TEXT,
+  FOREIGN KEY (_id_commune) REFERENCES communes(_id_commune) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_commune_shapes_commune ON commune_shapes(_id_commune);
 
 CREATE INDEX IF NOT EXISTS idx_communes_name_fr ON communes(name_fr);
 CREATE INDEX IF NOT EXISTS idx_communes_name_nl ON communes(name_nl);

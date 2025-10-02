@@ -262,11 +262,13 @@ router.get("/me/scenarios", requireAuth, (req, res) => {
       `SELECT 
          s._id_scenario AS id,
          s.title_scenario AS title,
+         u.username_user AS author,
          COALESCE(sp.status,'not_started') as status,
          COALESCE(sp.bookmarked,0) as bookmarked,
          sp.started_at,
          sp.completed_at
        FROM scenarios s
+       LEFT JOIN users u ON u._id_user = s.created_by
        LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
        WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
        ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title_scenario`
@@ -433,12 +435,10 @@ router.post("/scenarios/:id/complete", requireAuth, (req, res) => {
     )
     .get(userId, scenarioId).c;
   if (totalMissions > 0 && completedCount !== totalMissions) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Toutes les missions doivent être complétées avant de terminer l'aventure",
-      });
+    return res.status(400).json({
+      error:
+        "Toutes les missions doivent être complétées avant de terminer l'aventure",
+    });
   }
   const progress = db
     .prepare(

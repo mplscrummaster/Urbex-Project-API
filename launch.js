@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 
 import usersRoutes from "./controllers/users.routes.js";
 import scenariosRoutes from "./controllers/scenarios.routes.js";
@@ -15,6 +16,10 @@ import missionDependenciesRoutes from "./controllers/missionDependencies.routes.
 import { PORT } from "./config/index.js";
 
 const app = express();
+// Response compression (gzip) for faster GeoJSON / JSON transfer
+app.use(compression({ threshold: 1024 }));
+const START_TIME = new Date().toISOString();
+const BUILD_INFO = { started_at: START_TIME };
 app.use(express.json());
 app.use(
   cors({
@@ -23,7 +28,8 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.get("/health", (_req, res) => res.json({ ok: true }));
+// Health (unique)
+app.get("/health", (_req, res) => res.json({ ok: true, ...BUILD_INFO }));
 
 app.use("/api/", usersRoutes);
 app.use("/api/", scenariosRoutes);
