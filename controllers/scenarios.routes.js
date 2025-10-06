@@ -5,7 +5,7 @@ import requireAuth from "../middleware/auth.js";
 const router = Router();
 
 // Helper to build map pin dataset
-function fetchScenarioCommunePins(query) {
+const fetchScenarioCommunePins = (query) => {
   const { published } = query || {};
   const clauses = [];
   const params = [];
@@ -31,7 +31,7 @@ function fetchScenarioCommunePins(query) {
     ${where}
     ORDER BY s.title_scenario ASC, c.name_fr ASC`;
   return db.prepare(sql).all(...params);
-}
+};
 
 // Primary route (nested naming convention)
 router.get("/scenarios/communes", (req, res) => {
