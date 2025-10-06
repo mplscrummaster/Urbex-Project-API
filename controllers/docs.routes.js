@@ -16,6 +16,8 @@ export const routes = [
   { method: "GET", path: "/api/scenarios" },
   { method: "GET", path: "/api/scenarios/:id" },
   { method: "GET", path: "/api/scenarios/:id/full" },
+  // scenario -> communes aggregated pins (map dataset) (supports ?published=1)
+  { method: "GET", path: "/api/scenarios/communes" },
   { method: "POST", path: "/api/scenarios" },
   { method: "PUT", path: "/api/scenarios/:id" },
   { method: "DELETE", path: "/api/scenarios/:id" },

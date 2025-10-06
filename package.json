@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node launch.js",
-    "reset:seed": "node scripts/db-reset.js && node scripts/seed-scenarios.js && node scripts/seed-missions.js && node scripts/seed-mission_dependencies.js && node scripts/seed-blocks.js && node scripts/seed-communes.js && node scripts/seed-scenario_communes.js && node scripts/seed-users_players_progress.js",
-    "dev:seed": "node scripts/seed-scenarios.js && node scripts/seed-missions.js && node scripts/seed-mission_dependencies.js && node scripts/seed-blocks.js && node scripts/seed-communes.js && node scripts/seed-scenario_communes.js && node scripts/seed-users_players_progress.js",
-    "seed:all": "node scripts/seed-all.js --reset --publish --scores --media"
+    "db:reset": "node scripts/db-reset.js",
+    "seed": "node scripts/seed.js",
+    "seed:publish": "node scripts/seed.js --publish",
+    "seed:all": "node scripts/seed.js --publish --scores --media",
+    "seed:fresh": "npm run db:reset && node scripts/seed.js --with-communes --publish --scores --media"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
@@ -15,6 +17,7 @@
     "express": "^5.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "compression": "^1.7.4"
   }
 }
