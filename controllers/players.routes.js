@@ -139,7 +139,7 @@ router.get('/me/friends', requireAuth, (req, res) => {
       )
       .all(req.auth?.sub, req.auth?.sub);
 
-    console.log('req.auth?.sub', req.auth?.sub);
+    // console.log('req.auth?.sub', req.auth?.sub);
     if (!friends) return res.status(404).json({ error: 'friends not found' });
     res.json(friends);
   } catch (err) {
