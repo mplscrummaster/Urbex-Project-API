@@ -262,11 +262,13 @@ router.get("/me/scenarios", requireAuth, (req, res) => {
       `SELECT 
          s._id_scenario AS id,
          s.title_scenario AS title,
+         u.username_user AS author,
          COALESCE(sp.status,'not_started') as status,
          COALESCE(sp.bookmarked,0) as bookmarked,
          sp.started_at,
          sp.completed_at
        FROM scenarios s
+       LEFT JOIN users u ON u._id_user = s.created_by
        LEFT JOIN scenario_progress sp ON sp._id_scenario = s._id_scenario AND sp._id_user = ?
        WHERE sp.bookmarked = 1 OR sp.status IS NOT NULL
        ORDER BY sp.bookmarked DESC, sp.last_interaction_at DESC NULLS LAST, s.title_scenario`
@@ -344,24 +346,10 @@ router.post("/missions/:id/complete", requireAuth, (req, res) => {
     // ignore constraint errors (already completed)
   }
 
-  // check if scenario is fully completed (all missions done)
-  const totalMissions = db
-    .prepare(`SELECT COUNT(*) as c FROM missions WHERE _id_scenario=?`)
-    .get(mission._id_scenario).c;
-  const completedCount = db
-    .prepare(
-      `SELECT COUNT(*) as c FROM mission_progress mp JOIN missions m ON m._id_mission=mp._id_mission WHERE mp._id_user=? AND m._id_scenario=?`
-    )
-    .get(userId, mission._id_scenario).c;
-  if (totalMissions > 0 && completedCount === totalMissions) {
-    db.prepare(
-      `UPDATE scenario_progress SET status='completed', completed_at=?, last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
-    ).run(now, now, userId, mission._id_scenario);
-  } else {
-    db.prepare(
-      `UPDATE scenario_progress SET last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
-    ).run(now, userId, mission._id_scenario);
-  }
+  // DO NOT auto-complete the scenario; only the explicit finish endpoint should set status='completed'
+  db.prepare(
+    `UPDATE scenario_progress SET last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
+  ).run(now, userId, mission._id_scenario);
 
   {
     const scenarioId = mission._id_scenario;
@@ -426,6 +414,60 @@ router.post("/missions/:id/complete", requireAuth, (req, res) => {
       missions: missionsWithState,
     });
   }
+});
+
+// Manually complete a scenario (explicit finish action)
+router.post("/scenarios/:id/complete", requireAuth, (req, res) => {
+  const userId = req.auth.sub;
+  const scenarioId = Number(req.params.id);
+  const scenario = db
+    .prepare(`SELECT _id_scenario FROM scenarios WHERE _id_scenario = ?`)
+    .get(scenarioId);
+  if (!scenario) return res.status(404).json({ error: "Scenario not found" });
+  const now = new Date().toISOString();
+  // Ensure all missions are completed before allowing manual completion
+  const totalMissions = db
+    .prepare(`SELECT COUNT(*) as c FROM missions WHERE _id_scenario=?`)
+    .get(scenarioId).c;
+  const completedCount = db
+    .prepare(
+      `SELECT COUNT(*) as c FROM mission_progress mp JOIN missions m ON m._id_mission=mp._id_mission WHERE mp._id_user=? AND m._id_scenario=?`
+    )
+    .get(userId, scenarioId).c;
+  if (totalMissions > 0 && completedCount !== totalMissions) {
+    return res.status(400).json({
+      error:
+        "Toutes les missions doivent être complétées avant de terminer l'aventure",
+    });
+  }
+  const progress = db
+    .prepare(
+      `SELECT * FROM scenario_progress WHERE _id_user=? AND _id_scenario=?`
+    )
+    .get(userId, scenarioId);
+  if (!progress) {
+    db.prepare(
+      `INSERT INTO scenario_progress(_id_user,_id_scenario,status,bookmarked,started_at,completed_at,last_interaction_at) VALUES (?,?,?,?,?,?,?)`
+    ).run(userId, scenarioId, "completed", 1, now, now, now);
+  } else if (progress.status !== "completed") {
+    db.prepare(
+      `UPDATE scenario_progress SET status='completed', completed_at=?, last_interaction_at=? WHERE _id_user=? AND _id_scenario=?`
+    ).run(now, now, userId, scenarioId);
+  }
+  const updated = db
+    .prepare(
+      `SELECT status, bookmarked, started_at, completed_at FROM scenario_progress WHERE _id_user=? AND _id_scenario=?`
+    )
+    .get(userId, scenarioId);
+  return res.json({
+    scenario: { id: scenarioId },
+    progress: {
+      status: updated.status,
+      bookmarked: !!updated.bookmarked,
+      started_at: updated.started_at,
+      completed_at: updated.completed_at,
+    },
+  });
 });
 
 export default router;

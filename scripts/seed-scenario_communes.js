@@ -1,25 +1,14 @@
-/**
- * Seed statique des liaisons scenario_communes d'après l'état actuel validé.
- * Idempotent: on remplace l'ensemble des liens par ce jeu canonique.
- */
-import db from "../db/index.js";
-
-const LINKS = [
-  { title: "Les ruines oubliées", _id_commune: 873 }, // Mouscron
-  { title: "Les ombres de la ville", _id_commune: 930 }, // Durbuy
-  { title: "Les passages interdits", _id_commune: 639 }, // Momignies
-  { title: "Le réseau invisible", _id_commune: 1153 }, // Sainte-Ode
-  { title: "Sous la poussière du temps", _id_commune: 809 }, // Malines
-  { title: "La clé des profondeurs", _id_commune: 1029 }, // Yvoir
-  { title: "La clé des profondeurs", _id_commune: 1042 }, // Ciney
-  { title: "Mémoire des murs", _id_commune: 702 }, // Incourt
-  { title: "Mémoire des murs", _id_commune: 912 }, // Perwez
-  { title: "Mémoire des murs", _id_commune: 963 }, // Ramillies
-  { title: "Les vestiges du silence", _id_commune: 922 }, // Gerpinnes
-  { title: "Les vestiges du silence", _id_commune: 976 }, // Charleroi
-  { title: "Les vestiges du silence", _id_commune: 1132 }, // Châtelet
+#!/usr/bin/env node
+console.warn('[deprecated] Scenario<->communes links seeded in scripts/seed.js');
+process.exit(0);
   { title: "Chroniques souterraines", _id_commune: 594 }, // Lievegem
   { title: "Chroniques souterraines", _id_commune: 925 }, // Eeklo
+  // Nouveaux scénarios groupés à Fleurus (id 1043) – 5 scénarios
+  { title: "Fissures de lumière", _id_commune: 1043 }, // Fleurus
+  { title: "Cartographie des échos", _id_commune: 1043 }, // Fleurus
+  { title: "Lignes fantômes", _id_commune: 1043 }, // Fleurus
+  { title: "La chambre scellée", _id_commune: 1043 }, // Fleurus
+  { title: "Balises du passé", _id_commune: 1043 }, // Fleurus
 ];
 
 const seedScenarioCommunes = () => {

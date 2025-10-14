@@ -1,3 +1,3 @@
 /node_modules
-db/*.db
+db/bdd.db
 .DS_Store
