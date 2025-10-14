@@ -19,7 +19,7 @@ router.get('/players', (req, res) => {
   }
 });
 
-// READ player
+// READ player by id
 router.get('/players/:id', (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ error: 'invalid id' });
@@ -48,6 +48,52 @@ router.get('/me/player', requireAuth, (req, res) => {
       .get(req.auth?.sub);
     if (!player) return res.status(404).json({ error: 'player not found' });
     res.json(player);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ player friends (self)
+router.get('/me/friends', requireAuth, (req, res) => {
+  try {
+    const friends = db
+      .prepare(
+        ` SELECT DISTINCT
+          pf._id_player AS id,
+          u.username_user AS username,
+          pf.nickname,
+          pf.url_img_avatar,
+          pf.score,
+          pf.level,
+          pf.xp
+        FROM friends f
+        JOIN players pf ON pf._id_player = CASE
+                                            WHEN f.id_friend1 = ? THEN f.id_friend2
+                                            ELSE f.id_friend1
+                                          END
+        JOIN users u ON u._id_user = pf._id_user
+        WHERE ? IN (f.id_friend1, f.id_friend2)
+        ORDER BY pf._id_player;`
+      )
+      .all(req.auth?.sub, req.auth?.sub);
+
+    // console.log('req.auth?.sub', req.auth?.sub);
+    if (!friends) return res.status(404).json({ error: 'friends not found' });
+    res.json(friends);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// READ friend by nickname
+router.get('/friends/:nickname', (req, res) => {
+  const nickname = req.params.nickname;
+  console.log(nickname);
+
+  try {
+    const row = db.prepare(`select * from players where nickname = ?`).get(nickname);
+    if (!row) return res.status(404).json({ error: 'player not found' });
+    res.json(row);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -115,33 +161,31 @@ router.put('/me/player', requireAuth, (req, res) => {
   }
 });
 
-// READ player friends (self)
-router.get('/me/friends', requireAuth, (req, res) => {
-  try {
-    const friends = db
-      .prepare(
-        ` SELECT DISTINCT
-          pf._id_player AS id,
-          u.username_user AS username,
-          pf.nickname,
-          pf.url_img_avatar,
-          pf.score,
-          pf.level,
-          pf.xp
-        FROM friends f
-        JOIN players pf ON pf._id_player = CASE
-                                            WHEN f.id_friend1 = ? THEN f.id_friend2
-                                            ELSE f.id_friend1
-                                          END
-        JOIN users u ON u._id_user = pf._id_user
-        WHERE ? IN (f.id_friend1, f.id_friend2)
-        ORDER BY pf._id_player;`
-      )
-      .all(req.auth?.sub, req.auth?.sub);
+/**
+ * Met à jour une ressource en fonction de deux IDs reçus dans le body JSON.
+ * Exemple de body attendu :
+ * {
+ *   "id1": 123,
+ *   "id2": 456
+ * }
+ */
+router.post('/addfriends', (req, res) => {
+  const { id1, id2 } = req.body || {};
 
-    // console.log('req.auth?.sub', req.auth?.sub);
-    if (!friends) return res.status(404).json({ error: 'friends not found' });
-    res.json(friends);
+  // Vérification basique
+  if (!Number.isInteger(id1) || !Number.isInteger(id2)) {
+    return res.status(400).json({ error: 'id1 et id2 sont obligatoires et doivent être des entiers' });
+  }
+
+  try {
+    // Exemple de requête SQL : ici on met à jour une table fictive "liens"
+    const info = db.prepare(`INSERT INTO friends (id_friend1, id_friend2) VALUES (?, ?);`).run(id1, id2);
+
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Aucune ressource trouvée avec ces IDs' });
+    }
+
+    res.json({ success: true, updated: info.changes });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
