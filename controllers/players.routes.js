@@ -169,7 +169,7 @@ router.put('/me/player', requireAuth, (req, res) => {
  *   "id2": 456
  * }
  */
-router.post('/addfriends', (req, res) => {
+router.post('/friends/add', (req, res) => {
   const { id1, id2 } = req.body || {};
 
   // Vérification basique
