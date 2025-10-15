@@ -86,15 +86,32 @@ router.get('/me/friends', requireAuth, (req, res) => {
 });
 
 router.get('/me/tutorial', requireAuth, (req, res) => {
-  const id = req.body.id;
-  console.log(id);
-  
+  const _id_user = req.body._id_user;
+  console.log(_id_user);
+
+  try {
+    const player = db.prepare(`select * from startTutorial where _id_user = ?`).get(_id_user);
+    if (!player) return res.status(404).json({ error: 'player not found' });
+    res.json(player);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/me/tutorial', requireAuth, (req, res) => {
+  const _id_user = req.body._id_user;
+  const startTutorial = req.body.startTutorial;
+  console.log('_id_user', _id_user);
+  console.log('startTutorial', startTutorial);
+
   try {
     const player = db
       .prepare(
-        `select * from startTutorial where _id_user = ?`
+        `UPDATE startTutorial
+          SET startTutorial = ?
+          WHERE _id_user = ?;`
       )
-      .get(id);
+      .run(startTutorial, _id_user);
     if (!player) return res.status(404).json({ error: 'player not found' });
     res.json(player);
   } catch (err) {
