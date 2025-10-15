@@ -191,4 +191,26 @@ router.post('/friends/add', (req, res) => {
   }
 });
 
+router.delete('/friends/delete', requireAuth, (req, res) => {
+  const { id1, id2 } = req.body || {};
+
+  // Vérification basique
+  if (!Number.isInteger(id1) || !Number.isInteger(id2)) {
+    return res.status(400).json({ error: 'id1 et id2 sont obligatoires et doivent être des entiers' });
+  }
+
+  try {
+    // Exemple de requête SQL : ici on met à jour une table fictive "liens"
+    const info = db.prepare(`DELETE FROM friends WHERE id_friend1 = ? AND id_friend2 = ?;`).run(id1, id2);
+
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Aucune ressource trouvée avec ces IDs' });
+    }
+
+    res.json({ success: true, updated: info.changes });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
