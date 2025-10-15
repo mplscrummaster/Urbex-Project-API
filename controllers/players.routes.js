@@ -84,7 +84,12 @@ router.get('/me/friends', requireAuth, (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
+/**
+ * Objet attendu : 
+ * {
+    "_id_user": 1,
+  }
+ */
 router.get('/me/tutorial', requireAuth, (req, res) => {
   const _id_user = req.body._id_user;
   console.log(_id_user);
@@ -97,7 +102,13 @@ router.get('/me/tutorial', requireAuth, (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
+/**
+ * Objet attendu : 
+ * {
+    "_id_user": 1,
+    "startTutorial" : 0
+  }
+ */
 router.put('/me/tutorial', requireAuth, (req, res) => {
   const _id_user = req.body._id_user;
   const startTutorial = req.body.startTutorial;
