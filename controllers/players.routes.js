@@ -85,6 +85,23 @@ router.get('/me/friends', requireAuth, (req, res) => {
   }
 });
 
+router.get('/me/tutorial', requireAuth, (req, res) => {
+  const id = req.body.id;
+  console.log(id);
+  
+  try {
+    const player = db
+      .prepare(
+        `select * from startTutorial where _id_user = ?`
+      )
+      .get(id);
+    if (!player) return res.status(404).json({ error: 'player not found' });
+    res.json(player);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // READ friend by nickname
 router.get('/friends/:nickname', (req, res) => {
   const nickname = req.params.nickname;
