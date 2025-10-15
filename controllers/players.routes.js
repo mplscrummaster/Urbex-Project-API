@@ -85,10 +85,47 @@ router.get('/me/friends', requireAuth, (req, res) => {
   }
 });
 
+router.get('/me/tutorial/:_id_user', requireAuth, (req, res) => {
+  const _id_user = req.params._id_user;
+  // console.log(_id_user);
+
+  try {
+    const player = db.prepare(`select * from startTutorial where _id_user = ?`).get(_id_user);
+    if (!player) return res.status(404).json({ error: 'player not found' });
+    res.json(player);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+/**
+ * Objet attendu : 
+ * {
+    "_id_user": 1,
+    "startTutorial" : 0
+  }
+ */
+router.put('/me/tutorial', requireAuth, (req, res) => {
+  const _id_user = req.body._id_user;
+  const startTutorial = req.body.startTutorial;
+  // console.log('_id_user', _id_user);
+  // console.log('startTutorial', startTutorial);
+
+  try {
+    const user = db.prepare('SELECT * FROM startTutorial WHERE _id_user = ?').get(_id_user);
+    if (!user) return res.status(404).json({ error: 'user not found' });
+
+    const row = db.prepare(`UPDATE startTutorial SET startTutorial = ? WHERE _id_user = ?;`).run(startTutorial, _id_user);
+    if (!row) return res.status(404).json({ error: 'player not found' });
+    res.json(row);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // READ friend by nickname
 router.get('/friends/:nickname', (req, res) => {
   const nickname = req.params.nickname;
-  console.log(nickname);
+  // console.log(nickname);
 
   try {
     const row = db.prepare(`select * from players where nickname = ?`).get(nickname);
