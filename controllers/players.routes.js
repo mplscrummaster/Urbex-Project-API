@@ -92,7 +92,7 @@ router.get('/me/friends', requireAuth, (req, res) => {
  */
 router.get('/me/tutorial', requireAuth, (req, res) => {
   const _id_user = req.body._id_user;
-  console.log(_id_user);
+  // console.log(_id_user);
 
   try {
     const player = db.prepare(`select * from startTutorial where _id_user = ?`).get(_id_user);
@@ -112,8 +112,8 @@ router.get('/me/tutorial', requireAuth, (req, res) => {
 router.put('/me/tutorial', requireAuth, (req, res) => {
   const _id_user = req.body._id_user;
   const startTutorial = req.body.startTutorial;
-  console.log('_id_user', _id_user);
-  console.log('startTutorial', startTutorial);
+  // console.log('_id_user', _id_user);
+  // console.log('startTutorial', startTutorial);
 
   try {
     const player = db
@@ -133,7 +133,7 @@ router.put('/me/tutorial', requireAuth, (req, res) => {
 // READ friend by nickname
 router.get('/friends/:nickname', (req, res) => {
   const nickname = req.params.nickname;
-  console.log(nickname);
+  // console.log(nickname);
 
   try {
     const row = db.prepare(`select * from players where nickname = ?`).get(nickname);
