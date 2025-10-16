@@ -13,6 +13,7 @@ export const requireAuth = (req, res, next) => {
     }
     const token = parts[1];
     const payload = jwt.verify(token, JWT_SECRET);
+    console.log("Payload JWT:", payload);
     req.auth = payload; // { sub, mail, iat, exp }
     next();
   } catch (e) {

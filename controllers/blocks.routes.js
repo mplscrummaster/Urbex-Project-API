@@ -275,6 +275,7 @@ router.put("/missions/:id/blocks/reorder", requireAuth, (req, res) => {
       .all(missionId);
     return res.json(rows);
   } catch (err) {
+    console.error("Erreur PUT /missions/:id/blocks/reorder:", err);
     return res.status(500).json({ error: err.message });
   }
 });
